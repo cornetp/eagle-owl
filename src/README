@@ -1,0 +1,4 @@
+needs:
+
+libusb-dev (sudo apt-get install libusb-dev)
+
