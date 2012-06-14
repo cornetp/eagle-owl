@@ -70,6 +70,39 @@ static int get_word(usb_dev_handle *hdev, int epin, char *word)
   return size;
 }
 
+static int process_frame(unsigned char *frame)
+{
+  int i;
+  unsigned int checksum = 0;
+
+  if(frame[0] != 0x59 && frame[0] != 0x51)
+  {
+    printf("data error: invalid ID 0x%x\n", frame[0]);
+    return -1;
+  }
+
+  for(i=0; i<10; i++)
+    checksum += frame[i];
+  checksum &= 0xff;
+  if(checksum != frame[10])
+  {
+    printf("data error: invalid checksum: expected 0x%x, got 0x%x\n", frame[10], checksum);
+    return -1;
+  }
+
+  int volts = 230;
+  int year = frame[1]+2000;
+  int month = frame[2];
+  int day = frame[3];
+  int hour = frame[4];
+  int minutes = frame[5];
+  float cost = (frame[6]+(frame[7]<<8))/100.0;
+  float amps = (frame[8]+(frame[9]<<8))*0.07;
+  float watts = amps * volts;
+
+  printf("%02d/%02d/%04d %02d:%02d : %f kW\n", day, month, year, hour, minutes, watts);
+}
+
 static int handle_device(struct usb_device *dev, usb_dev_handle *hdev)
 {
   int r;
@@ -106,8 +139,8 @@ static int handle_device(struct usb_device *dev, usb_dev_handle *hdev)
       epout = ep;
   }
   printf("epin = 0x%x - epout = 0x%x\n", epin, epout);
-  char tag1[11] = { 0xA9, 0x49, 0x44, 0x54, 0x43, 0x4D, 0x56, 0x30, 0x30, 0x31, 0x01 };
-  char tag2[11] = { 0xA9, 0x49, 0x44, 0x54, 0x57, 0x41, 0x49, 0x54, 0x50, 0x43, 0x52 };
+  char id_msg[11] = { 0xA9, 0x49, 0x44, 0x54, 0x43, 0x4D, 0x56, 0x30, 0x30, 0x31, 0x01 };
+  char wait_msg[11] = { 0xA9, 0x49, 0x44, 0x54, 0x57, 0x41, 0x49, 0x54, 0x50, 0x43, 0x52 };
   unsigned char data[1];
   data[0] = 0xA5;	
         r = usb_bulk_write(hdev, epout, &data, sizeof(data), 1000);
@@ -123,7 +156,7 @@ static int handle_device(struct usb_device *dev, usb_dev_handle *hdev)
       printf("bulk_read returned %d (%s)\n", r, usb_strerror());
       return -1;
     }
-    printf("read %d bytes: \n", r);
+//    printf("read %d bytes: \n", r);
     //if(r%11) continue;
     unsigned char *bufptr = (unsigned char *)buffer;
     if(r%11 == 0){
@@ -136,21 +169,22 @@ static int handle_device(struct usb_device *dev, usb_dev_handle *hdev)
       //  {
       //    printf("0x%02x - ", word[i]);
       //  }
-        if(strncmp((char *)word, tag1, 11) == 0)
+        if(strncmp((char *)word, id_msg, 11) == 0)
           data[0]=0x5A;
-        else if(strncmp((char *)word, tag2, 11) == 0)
+        else if(strncmp((char *)word, wait_msg, 11) == 0)
           data[0]=0xA5;
         else
         {
-          printf("received data ");
-          for(i=0; i<11; i++)
-            printf("0x%02x - ", word[i]);
-          printf("\n\n");
+//          printf("received data ");
+ //         for(i=0; i<11; i++)
+ //           printf("0x%02x - ", word[i]);
+//          printf("\n\n");
+          process_frame((unsigned char *)word);
           continue;
         }
-        printf("> %s\n", word);
+//        printf("> %s\n", word);
         r = usb_bulk_write(hdev, epout, &data, sizeof(data), 1000);
-        printf(" -> WRITE 0x%x \n\n", data[0]);
+//        printf(" -> WRITE 0x%x \n\n", data[0]);
       };    
     }
   }
