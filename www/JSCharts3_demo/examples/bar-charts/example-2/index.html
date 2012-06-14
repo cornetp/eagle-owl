@@ -1,0 +1,48 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="../../../sources/jscharts.js"></script>
+
+</head>
+<body>
+
+<div id="graph">Loading graph...</div>
+
+<script type="text/javascript">
+	var myData = new Array(['Asia', 437], ['Europe', 322], ['North America', 233], ['Latin America', 110], ['Africa', 34], ['Middle East', 20], ['Aus/Oceania', 19]);
+	var colors = ['#2D6B96', '#327AAD', '#3E90C9', '#55A7E3', '#60B6F0', '#81C4F0', '#9CCEF0'];
+	var myChart = new JSChart('graph', 'bar');
+	myChart.setDataArray(myData);
+	myChart.colorizeBars(colors);
+	myChart.setTitle('Internet usage by World Region (millions of users)');
+	myChart.setTitleColor('#8E8E8E');
+	myChart.setAxisNameX('');
+	myChart.setAxisNameY('');
+	myChart.setAxisColor('#C4C4C4');
+	myChart.setAxisNameFontSize(16);
+	myChart.setAxisNameColor('#999');
+	myChart.setAxisValuesColor('#777');
+	myChart.setAxisColor('#B5B5B5');
+	myChart.setAxisWidth(1);
+	myChart.setBarValuesColor('#2F6D99');
+	myChart.setBarOpacity(0.5);
+	myChart.setAxisPaddingTop(60);
+	myChart.setAxisPaddingBottom(40);
+	myChart.setAxisPaddingLeft(45);
+	myChart.setTitleFontSize(11);
+	myChart.setBarBorderWidth(0);
+	myChart.setBarSpacingRatio(50);
+	myChart.setBarOpacity(0.9);
+	myChart.setFlagRadius(6);
+	myChart.setTooltip(['North America', 'U.S.A and Canada']);
+	myChart.setTooltipPosition('nw');
+	myChart.setTooltipOffset(3);
+	myChart.setSize(616, 321);
+	myChart.setBackgroundImage('chart_bg.jpg');
+	myChart.draw();
+</script>
+
+</body>
+</html>

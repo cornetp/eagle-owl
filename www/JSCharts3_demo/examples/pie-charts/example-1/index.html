@@ -1,0 +1,32 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="../../../sources/jscharts.js"></script>
+
+</head>
+<body>
+
+<div id="graph">Loading graph...</div>
+
+<script type="text/javascript">
+	var myData = new Array(['Communicate socially', 42], ['Engage in work for classes', 38], ['Be entertained', 10], ['Communicate professionally', 7], ['Not sure/Don\'t know', 2]);
+	var colors = ['#C40000', '#750303', '#F9ECA2', '#FA9000', '#FA5400'];
+	var myChart = new JSChart('graph', 'pie');
+	myChart.setDataArray(myData);
+	myChart.colorizePie(colors);
+	myChart.setTitle('Students use the Internet most often to (%)');
+	myChart.setTitleColor('#8E8E8E');
+	myChart.setTitleFontSize(11);
+	myChart.setTextPaddingTop(30);
+	myChart.setSize(616, 321);
+	myChart.setPiePosition(308, 170);
+	myChart.setPieRadius(85);
+	myChart.setPieUnitsColor('#555');
+	myChart.setBackgroundImage('chart_bg.jpg');
+	myChart.draw();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="bar">
+		<data unit="2005" value="2"/>
+		<data unit="2006" value="1"/>
+		<data unit="2007" value="3"/>
+		<data unit="2008" value="6"/>
+	</dataset>
+	<optionset>
+		<option set="setBarColor" value="'#42aBdB'"/>
+		<option set="setBarOpacity" value="0.8"/>
+		<option set="setBarBorderColor" value="'#D9EDF7'"/>
+		<option set="setBarValues" value="false"/>
+		<option set="setTitleColor" value="'#8C8383'"/>
+		<option set="setAxisColor" value="'#777E81'"/>
+		<option set="setAxisValuesColor" value="'#777E81'"/>
+	</optionset>
+</JSChart>

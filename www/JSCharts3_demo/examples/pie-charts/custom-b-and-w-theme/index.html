@@ -1,0 +1,30 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="../../../sources/jscharts.js"></script>
+
+</head>
+<body>
+
+<div id="graph">Loading graph...</div>
+
+<script type="text/javascript">
+	
+	var myData = new Array(['S.1', 20], ['S.2', 70], ['S.3', 30], ['S.4', 60], ['S.5', 80], ['S.6', 10]);
+	var myChart = new JSChart('graph', 'pie');
+	var colors = ['#898A89', '#767776', '#676767', '#434443', '#B0B1B0', '#9E9F9E'];
+	myChart.setDataArray(myData);
+	myChart.colorizePie(colors);
+	myChart.setPieUnitsOffset(-30);
+	myChart.setPieUnitsColor('#fff');
+	myChart.setPieValuesOffset(10);
+	myChart.setPieValuesColor('#878787');
+	myChart.setTitleColor('#7A7A7A');
+	myChart.draw();
+	
+</script>
+
+</body>
+</html>

@@ -1,0 +1,165 @@
+{
+	"JSChart" : {
+		"datasets" : [
+			{
+				"type" : "bar",
+				"data" : [
+					{
+						"unit" : "Asia",
+						"value" : "437,520"
+					},
+					{
+						"unit" : "Europe",
+						"value" : "322,390"
+					},
+					{
+						"unit" : "North America",
+						"value" : "233,286"
+					},
+					{
+						"unit" : "Latin America",
+						"value" : "110,162"
+					},
+					{
+						"unit" : "Africa",
+						"value" : "34,49"
+					},
+					{
+						"unit" : "Middle East",
+						"value" : "20,31"
+					},
+					{
+						"unit" : "Aus/Oceania",
+						"value" : "19,22"
+					}
+				]
+			}
+		],
+		"optionset" : [
+			{
+				"set" : "setTitle",
+				"value" : "'Internet usage by World Region (millions of users)'"
+			},
+			{
+				"set" : "setTitleColor",
+				"value" : "'#8E8E8E'"
+			},
+			{
+				"set" : "setAxisNameX",
+				"value" : "''"
+			},
+			{
+				"set" : "setAxisNameY",
+				"value" : "''"
+			},
+			{
+				"set" : "setAxisNameFontSize",
+				"value" : "16"
+			},
+			{
+				"set" : "setAxisNameColor",
+				"value" : "'#999'"
+			},
+			{
+				"set" : "setAxisValuesAngle",
+				"value" : "30"
+			},
+			{
+				"set" : "setAxisValuesColor",
+				"value" : "'#777'"
+			},
+			{
+				"set" : "setAxisColor",
+				"value" : "'#B5B5B5'"
+			},
+			{
+				"set" : "setAxisWidth",
+				"value" : "1"
+			},
+			{
+				"set" : "setBarValuesColor",
+				"value" : "'#2F6D99'"
+			},
+			{
+				"set" : "setAxisPaddingTop",
+				"value" : "60"
+			},
+			{
+				"set" : "setAxisPaddingBottom",
+				"value" : "60"
+			},
+			{
+				"set" : "setAxisPaddingLeft",
+				"value" : "45"
+			},
+			{
+				"set" : "setTitleFontSize",
+				"value" : "11"
+			},
+			{
+				"set" : "setBarColor",
+				"value" : "'#2D6B96',1"
+			},
+			{
+				"set" : "setBarColor",
+				"value" : "'#9CCEF0', 2"
+			},
+			{
+				"set" : "setBarBorderWidth",
+				"value" : "0"
+			},
+			{
+				"set" : "setBarSpacingRatio",
+				"value" : "50"
+			},
+			{
+				"set" : "setBarOpacity",
+				"value" : "0.9"
+			},
+			{
+				"set" : "setFlagRadius",
+				"value" : "6"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "['North America', 'Click me', 1], callback"
+			},
+			{
+				"set" : "setTooltipPosition",
+				"value" : "'nw'"
+			},
+			{
+				"set" : "setTooltipOffset",
+				"value" : "3"
+			},
+			{
+				"set" : "setLegendShow",
+				"value" : "true"
+			},
+			{
+				"set" : "setLegendPosition",
+				"value" : "'right top'"
+			},
+			{
+				"set" : "setLegendForBar",
+				"value" : "1, '2005'"
+			},
+			{
+				"set" : "setLegendForBar",
+				"value" : "2, '2010'"
+			},
+			{
+				"set" : "setSize",
+				"value" : "616, 321"
+			},
+			{
+				"set" : "setGridColor",
+				"value" : "'#C6C6C6'"
+			},
+			{
+				"set" : "setTooltipOffset",
+				"value" : "3"
+			}
+		]
+	}
+}

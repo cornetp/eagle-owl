@@ -1,0 +1,36 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="../../../sources/jscharts.js"></script>
+
+</head>
+<body>
+
+<div id="graph">Loading graph...</div>
+
+<script type="text/javascript">
+	
+	var myData = new Array(['2003', 2.6], ['2004', 4.5], ['2005', 2], ['2006', 1.5], ['2007', 3], ['2008', 5.2]);
+	var myChart = new JSChart('graph', 'bar');
+	var colors = ['#7979DB', '#7952E9', '#792BC8', '#792BA1', '#792BA1', '#792B79'];
+	myChart.setDataArray(myData);
+	myChart.colorizeBars(colors);
+	myChart.setAxisValuesColor('#008');
+	myChart.setAxisColor('#ABABAB');
+	myChart.setAxisWidth(1);
+	myChart.setAxisValuesColor('#858585');
+	myChart.setAxisNameColor('#858585');
+	myChart.setBarBorderColor('#bbb');
+	myChart.setBarOpacity(0.8);
+	myChart.setBarSpacingRatio(50);
+	myChart.setBarValues(false);
+	myChart.setTitleColor('#928888');
+	myChart.setGridColor('#ABABAB');
+	myChart.draw();
+	
+</script>
+
+</body>
+</html>

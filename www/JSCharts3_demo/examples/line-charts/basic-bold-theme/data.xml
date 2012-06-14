@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="line">
+		<data unit="10" value="2"/>
+		<data unit="15" value="0"/>
+		<data unit="18" value="3"/>
+		<data unit="19" value="6"/>
+		<data unit="20" value="8.5"/>
+		<data unit="25" value="10"/>
+		<data unit="30" value="9"/>
+		<data unit="35" value="8"/>
+		<data unit="40" value="5"/>
+		<data unit="45" value="6"/>
+		<data unit="50" value="2.5"/>
+	</dataset>
+	<optionset>
+		<option set="setLineColor" value="'#8D9386'"/>
+		<option set="setLineWidth" value="4"/>
+		<option set="setTitleColor" value="'#7D7D7D'"/>
+		<option set="setAxisColor" value="'#9F0505'"/>
+		<option set="setGridColor" value="'#a4a4a4'"/>
+		<option set="setAxisValuesColor" value="'#333639'"/>
+		<option set="setAxisNameColor" value="'#333639'"/>
+		<option set="setTextPaddingLeft" value="0"/>
+	</optionset>
+</JSChart>

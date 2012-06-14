@@ -1,0 +1,51 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="../../../sources/jscharts.js"></script>
+
+</head>
+<body>
+
+<div id="graph">Loading graph...</div>
+
+<script type="text/javascript">
+	
+	var myData = new Array([10, 2], [15, 0], [18, 3], [19, 6], [20, 8.5], [25, 10], [30, 9], [35, 8], [40, 5], [45, 6], [50, 2.5]);
+	var myChart = new JSChart('graph', 'line');
+	myChart.setDataArray(myData);
+	myChart.setAxisColor('#656565');
+	myChart.setAxisNameColor('#4A4A4A');
+	myChart.setAxisNameFontSize(10);
+	myChart.setAxisNameX('Horizontal axis values');
+	myChart.setAxisNameY('Vertical axis');
+	myChart.setAxisPaddingBottom(60);
+	myChart.setAxisPaddingLeft(180);
+	myChart.setAxisPaddingRight(170);
+	myChart.setAxisPaddingTop(65);
+	myChart.setAxisValuesColor('#656565');
+	myChart.setAxisValuesNumberX(6);
+	myChart.setBackgroundColor('#EEE');
+	myChart.setGrid(false);
+	myChart.setLabelY([0, 'Low']);
+	myChart.setLabelY([5, 'Medium']);
+	myChart.setLabelY([10, 'High']);
+	myChart.setLineColor('#8638D5');
+	myChart.setShowYValues(false);
+	myChart.setTitle('A customized chart');
+	myChart.setTitleColor('#505050');
+	myChart.setSize(616, 321);
+	myChart.setTextPaddingBottom(20);
+	myChart.setTextPaddingLeft(120);
+	myChart.setTextPaddingTop(15);
+	myChart.setFlagRadius(6);
+	myChart.setTooltip([25, 'Tooltip for value 25 on X axis']);
+	myChart.setTooltip([40, 'Tooltip for value 40 on X axis']);
+	myChart.setBackgroundImage('chart_bg.jpg');
+	myChart.draw();
+	
+</script>
+
+</body>
+</html>

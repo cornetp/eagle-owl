@@ -1,0 +1,278 @@
+{
+	"JSChart" : {
+		"datasets" : [
+			{
+				"type" : "line",
+				"id" : "blue",
+				"data" : [
+					{
+						"unit" : "1",
+						"value" : "80"
+					},
+					{
+						"unit" : "2",
+						"value" : "40"
+					},
+					{
+						"unit" : "3",
+						"value" : "60"
+					},
+					{
+						"unit" : "4",
+						"value" : "65"
+					},
+					{
+						"unit" : "5",
+						"value" : "50"
+					},
+					{
+						"unit" : "6",
+						"value" : "50"
+					},
+					{
+						"unit" : "7",
+						"value" : "60"
+					},
+					{
+						"unit" : "8",
+						"value" : "80"
+					},
+					{
+						"unit" : "9",
+						"value" : "150"
+					},
+					{
+						"unit" : "10",
+						"value" : "100"
+					}
+				]
+			},
+			{
+				"type" : "line",
+				"id" : "green",
+				"data" : [
+					{
+						"unit" : "1",
+						"value" : "100"
+					},
+					{
+						"unit" : "2",
+						"value" : "55"
+					},
+					{
+						"unit" : "3",
+						"value" : "80"
+					},
+					{
+						"unit" : "4",
+						"value" : "115"
+					},
+					{
+						"unit" : "5",
+						"value" : "80"
+					},
+					{
+						"unit" : "6",
+						"value" : "70"
+					},
+					{
+						"unit" : "7",
+						"value" : "30"
+					},
+					{
+						"unit" : "8",
+						"value" : "130"
+					},
+					{
+						"unit" : "9",
+						"value" : "160"
+					},
+					{
+						"unit" : "10",
+						"value" : "170"
+					}
+				]
+			},
+			{
+				"type" : "line",
+				"id" : "gray",
+				"data" : [
+					{
+						"unit" : "1",
+						"value" : "150"
+					},
+					{
+						"unit" : "2",
+						"value" : "25"
+					},
+					{
+						"unit" : "3",
+						"value" : "100"
+					},
+					{
+						"unit" : "4",
+						"value" : "80"
+					},
+					{
+						"unit" : "5",
+						"value" : "20"
+					},
+					{
+						"unit" : "6",
+						"value" : "65"
+					},
+					{
+						"unit" : "7",
+						"value" : "0"
+					},
+					{
+						"unit" : "8",
+						"value" : "155"
+					},
+					{
+						"unit" : "9",
+						"value" : "190"
+					},
+					{
+						"unit" : "10",
+						"value" : "200"
+					}
+				]
+			}
+		],
+		"optionset" : [
+			{
+				"set" : "setSize",
+				"value" : "550, 300"
+			},
+			{
+				"set" : "setAxisValuesNumberY",
+				"value" : "5"
+			},
+			{
+				"set" : "setIntervalStartY",
+				"value" : "0"
+			},
+			{
+				"set" : "setIntervalEndY",
+				"value" : "200"
+			},
+			{
+				"set" : "setLabelX",
+				"value" : "[2,'p1']"
+			},
+			{
+				"set" : "setLabelX",
+				"value" : "[4,'p2']"
+			},
+			{
+				"set" : "setLabelX",
+				"value" : "[6,'p3']"
+			},
+			{
+				"set" : "setLabelX",
+				"value" : "[8,'p4']"
+			},
+			{
+				"set" : "setLabelX",
+				"value" : "[10,'p5']"
+			},
+			{
+				"set" : "setAxisValuesNumberX",
+				"value" : "5"
+			},
+			{
+				"set" : "setShowXValues",
+				"value" : "false"
+			},
+			{
+				"set" : "setTitleColor",
+				"value" : "'#454545'"
+			},
+			{
+				"set" : "setAxisValuesColor",
+				"value" : "'#454545'"
+			},
+			{
+				"set" : "setLineColor",
+				"value" : "'#A4D314', 'green'"
+			},
+			{
+				"set" : "setLineColor",
+				"value" : "'#BBBBBB', 'gray'"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[1,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[2,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[3,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[4,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[5,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[6,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[7,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[8,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[9,' ']"
+			},
+			{
+				"set" : "setTooltip",
+				"value" : "[10,' ']"
+			},
+			{
+				"set" : "setFlagColor",
+				"value" : "'#9D16FC'"
+			},
+			{
+				"set" : "setFlagRadius",
+				"value" : "4"
+			},
+			{
+				"set" : "setAxisPaddingRight",
+				"value" : "100"
+			},
+			{
+				"set" : "setLegendShow",
+				"value" : "true"
+			},
+			{
+				"set" : "setLegendPosition",
+				"value" : "490, 80"
+			},
+			{
+				"set" : "setLegendForLine",
+				"value" : "'blue', 'Click me'"
+			},
+			{
+				"set" : "setLegendForLine",
+				"value" : "'green', 'Click me'"
+			},
+			{
+				"set" : "setLegendForLine",
+				"value" : "'gray', 'Click me'"
+			}
+		]
+	}
+}

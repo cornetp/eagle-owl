@@ -1,3 +1,13 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="JSCharts3_demo/sources/jscharts.js"></script>
+
+</head>
+<body>
+
 <?php
 function month_to_string($nb)
 {
@@ -18,34 +28,45 @@ function month_to_string($nb)
   return $months[$nb];
 }
 
-function get_years($db)
-{
-  $i = 0;
-  $years = array();
-  $result = $db->query("select distinct year from energy_history;");
-  while ($res = $result->fetchArray()) {
-    $years[$i] = $res['year'];
-    $i++;
-  }
-  return $years;
-}
 
-function get_months($db, $year)
+function html_to_js_var($t)
 {
-  $i = 0;
-  $a = array();
-  $result = $db->query("select distinct month from energy_history where year = \"$year\";");
-  while ($res = $result->fetchArray()) {
-    $a[$i] = $res['month'];
-    $i++;
+  return str_replace('</script>','<\/script>',addslashes(str_replace("\r",'',str_replace("\n","",$t))));
+}
+function var_to_js($jsname,$a)
+{
+  $ret='';
+  if (is_array($a))
+  {
+    $ret.=$jsname.'= new Array();';
+
+    foreach ($a as $k => $a)
+    {
+      if (is_int($k) || is_integer($k))
+        $ret.= var_to_js($jsname.'['.$k.']',$a);
+      else
+        $ret.= var_to_js($jsname.'[\''.$k.'\']',$a);
+    }
   }
-  return $a;
+  elseif (is_bool($a)) 
+  {
+    $v=$a ? "true" : "false";
+    $ret.=$jsname.'='.$v.';';
+  }
+  elseif (is_int($a) || is_integer($a) || is_double($a) || is_float($a)) 
+  {
+    $ret.=$jsname.'='.$a.';';
+  }
+  elseif (is_string($a))
+  {
+    $ret.=$jsname.'=\''.html_to_js_var($a).'\';';
+  }
+  return $ret;
 }
 
 function get_data($db, $year=0, $month=0, $day=0)
 {
   $i = 0;
-  $arr = array();
 
   $unit = "year";
   if($year)
@@ -72,98 +93,75 @@ function get_data($db, $year=0, $month=0, $day=0)
 
 //  echo "<br/>$req<br/><br/>";
   $result = $db->query($req);
-  while ($res = $result->fetchArray()) {
-    $arr[$res[0]] = $res[1];
+  $arr = array();
+  while ($res = $result->fetchArray())
+  {
+    $arr[$i] = array( 0 => month_to_string($res[0]), 1 => $res[1] );
     $i++;
   }
   return $arr;
 }
 
-$db = new SQLite3('be.db');
-/*
-echo "different years: <br />";
-$years = get_years($db);
-foreach($years as $year)
-{
-  echo "$year <br />";
-  $months = get_months($db, $year);
-  foreach($months as $m)
-    echo " => $m <br />";
-}
-*/
+$db = new SQLite3('../be.db');
 
-$year = 0;
-$month= 0;
-$day  = 0;
-if(isset($_GET['year']))
-  $year = $_GET['year'];
-if(isset($_GET['month']))
-  $month = $_GET['month'];
-if(isset($_GET['day']))
-  $day = $_GET['day'];
-
-require 'line_chart.php';
-
-$all_lnk = "<a href = .>All</a>";
-$title = "$all_lnk";
-if($year){
-  $year_lnk = "<a href = ?year=$year>$year</a>";
-  $title .= "/$year_lnk";
-}
-if($month){
-  $month_lnk = "<a href = ?year=$year&month=$month>$month</a>";
-  $title .= "/$month_lnk";
-}
-if($day){
-  $day_lnk = "<a href = ?year=$year&month=$month&day=$day>$day</a>";
-  $title .= "/$day_lnk";
-}
-
-echo "<h2>$title</h2>";
-
-
-$data = get_data($db, $year, $month, $day);
-display_chart($data);
-echo "<br/>";
-foreach($data as $abs=>$val)
-{
-  $abs_unit = 'year';
-  $lnk = "<a href = ?";
-  if($year){
-    $lnk .= "year=$year&";
-    $abs_unit = 'month';
-  }
-  if($month){
-    $lnk .= "month=$month&";
-    $abs_unit = 'day';
-  }
-  if($day){
-    $lnk .= "day=$day&";
-    $abs_unit = 'hour';
-  }
-  $lnk.= "$abs_unit=$abs";
-  $lnk.=">$abs</a> ";
-  echo "$lnk ";
-}
-
-echo "<br />";
-
-/*
-echo "<h2>2011-2012</h2>";
-$data = get_data($db, 2011);
-display_chart($data);
 $data = get_data($db, 2012);
-display_chart($data);
-echo "<br />";
+$title = "Power consumption in 2012";
 
-echo "<h2>01/2012</h2>";
-$data = get_data($db, 2012, 01);
-display_chart($data);
-echo "<br />";
-
-echo "<h2>12/05/2012</h2>";
-$data = get_data($db, 2012, 05, 12);
-display_chart($data);
-echo "<br />";
-*/
 ?>
+
+<script language="JavaScript" type="text/javascript">
+
+function callback(v) {
+  alert('user click on "'+v+'"');
+} 
+
+function draw_chart(title)
+{
+	<?php echo var_to_js('myData', $data); ?>
+//	var colors = ['#AF0202', '#EC7A00', '#FCD200', '#81C714', '#000', '#000'];
+
+	var myChart = new JSChart('graph', 'bar');
+	myChart.setDataArray(myData);
+//	myChart.colorizeBars(colors);
+	myChart.setTitle(title);
+	myChart.setTitleColor('#FFFFFF');
+	myChart.setAxisNameX('');
+	myChart.setAxisNameY('kWh');
+	myChart.setAxisColor('#AAAAFF');
+	myChart.setAxisNameFontSize(16);
+	myChart.setAxisNameColor('#FFFFFF');
+	myChart.setAxisValuesColor('#FFFFFF');
+	myChart.setBarValuesColor('#AAAAFF');
+	myChart.setBarValuesFontSize(10);
+	myChart.setBarValuesDecimals(2);
+	myChart.setAxisPaddingTop(60);
+	myChart.setAxisPaddingRight(20);
+	myChart.setAxisPaddingLeft(60);
+	myChart.setAxisPaddingBottom(40);
+//	myChart.setTextPaddingLeft(105);
+//	myChart.setTitleFontSize(11);
+//	myChart.setBarBorderWidth(1);
+	myChart.setBarBorderColor('#C4C4C4');
+	myChart.setBarSpacingRatio(50);
+//	myChart.setGrid(false);
+	myChart.setSize(616, 321);
+//	myChart.setBackgroundImage('chart_bg.jpg');
+	myChart.setBackgroundColor('#222244');
+
+/*
+  var len=myData.length;
+  for(var i=0; i<len; i++)
+  {
+    myChart.setTooltip([myData[i][0]], callback);
+  }*/
+
+	myChart.draw();
+}
+</script>
+
+<?php
+echo "<div id=\"graph\">Loading graph...</div>";
+echo "<script language=javascript>draw_chart('$title')</script>";
+?>
+</body>
+</html>

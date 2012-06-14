@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="bar">
+		<data unit="Asia" value="437,520"/>
+		<data unit="Europe" value="322,390"/>
+		<data unit="North America" value="233,286"/>
+		<data unit="Latin America" value="110,162"/>
+		<data unit="Africa" value="34,49"/>
+		<data unit="Middle East" value="20,31"/>
+		<data unit="Aus/Oceania" value="19,22"/>
+	</dataset>
+	<optionset>
+		<option set="setTitle" value="'Internet usage by World Region (millions of users)'"/>
+		<option set="setTitleColor" value="'#8E8E8E'"/>
+		<option set="setAxisNameX" value="''"/>
+		<option set="setAxisNameY" value="''"/>
+		<option set="setAxisNameFontSize" value="16"/>
+		<option set="setAxisNameColor" value="'#999'"/>
+		<option set="setAxisValuesAngle" value="30"/>
+		<option set="setAxisValuesColor" value="'#777'"/>
+		<option set="setAxisColor" value="'#B5B5B5'"/>
+		<option set="setAxisWidth" value="1"/>
+		<option set="setBarValuesColor" value="'#2F6D99'"/>
+		<option set="setAxisPaddingTop" value="60"/>
+		<option set="setAxisPaddingBottom" value="60"/>
+		<option set="setAxisPaddingLeft" value="45"/>
+		<option set="setTitleFontSize" value="11"/>
+		<option set="setBarColor" value="'#2D6B96',1"/>
+		<option set="setBarColor" value="'#9CCEF0', 2"/>
+		<option set="setBarBorderWidth" value="0"/>
+		<option set="setBarSpacingRatio" value="50"/>
+		<option set="setBarOpacity" value="0.9"/>
+		<option set="setFlagRadius" value="6"/>
+		<option set="setTooltip" value="['North America', 'Click me', 1], callback"/>
+		<option set="setTooltipPosition" value="'nw'"/>
+		<option set="setTooltipOffset" value="3"/>
+		<option set="setLegendShow" value="true"/>
+		<option set="setLegendPosition" value="'right top'"/>
+		<option set="setLegendForBar" value="1, '2005'"/>
+		<option set="setLegendForBar" value="2, '2010'"/>
+		<option set="setSize" value="616, 321"/>
+		<option set="setGridColor" value="'#C6C6C6'"/>
+		<option set="setTooltipOffset" value="3"/>
+	</optionset>
+</JSChart>

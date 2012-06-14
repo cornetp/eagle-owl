@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="pie">
+		<data unit="Sector 1" value="2"/>
+		<data unit="Sector 2" value="1"/>
+		<data unit="Sector 3" value="3"/>
+		<data unit="Sector 4" value="6"/>
+		<data unit="Sector 5" value="8.5"/>
+		<data unit="Sector 6" value="10"/>
+	</dataset>
+	<colorset>
+		<color value="#FACC00"/>
+		<color value="#FB9900"/>
+		<color value="#FB6600"/>
+		<color value="#FB4800"/>
+		<color value="#CB0A0A"/>
+		<color value="#F8F933"/>
+	</colorset>
+	<optionset>
+		<option set="setTitleColor" value="'#857D7D'"/>
+		<option set="setPieUnitsColor" value="'#9B9B9B'"/>
+		<option set="setPieValuesColor" value="'#6A0000'"/>
+	</optionset>
+</JSChart>

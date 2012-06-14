@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="pie">
+		<data unit="S.1" value="20"/>
+		<data unit="S.2" value="70"/>
+		<data unit="S.3" value="30"/>
+		<data unit="S.4" value="60"/>
+		<data unit="S.5" value="80"/>
+		<data unit="S.6" value="10"/>
+	</dataset>
+	<colorset>
+		<color value="#898A89"/>
+		<color value="#767776"/>
+		<color value="#676767"/>
+		<color value="#434443"/>
+		<color value="#B0B1B0"/>
+		<color value="#9E9F9E"/>
+	</colorset>
+	<optionset>
+		<option set="setPieUnitsOffset" value="-30"/>
+		<option set="setPieUnitsColor" value="'#fff'"/>
+		<option set="setPieValuesOffset" value="10"/>
+		<option set="setPieValuesColor" value="'#878787'"/>
+		<option set="setTitleColor" value="'#7A7A7A'"/>
+	</optionset>
+</JSChart>

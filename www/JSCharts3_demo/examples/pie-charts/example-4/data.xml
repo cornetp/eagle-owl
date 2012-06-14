@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="pie">
+		<data unit="A" value="40"/>
+		<data unit="B" value="16"/>
+		<data unit="C" value="20"/>
+		<data unit="D" value="10"/>
+		<data unit="E" value="10"/>
+		<data unit="F" value="4"/>
+	</dataset>
+	<colorset>
+		<color value="#99CDFB"/>
+		<color value="#3366FB"/>
+		<color value="#0000FA"/>
+		<color value="#F8CC00"/>
+		<color value="#F89900"/>
+		<color value="#F76600"/>
+	</colorset>
+	<optionset>
+		<option set="setSize" value="600, 300"/>
+		<option set="setTitle" value="'Phd Reference Chart'"/>
+		<option set="setTitleFontFamily" value="'Times New Roman'"/>
+		<option set="setTitleFontSize" value="14"/>
+		<option set="setTitleColor" value="'#0F0F0F'"/>
+		<option set="setPieRadius" value="95"/>
+		<option set="setPieValuesColor" value="'#FFFFFF'"/>
+		<option set="setPieValuesFontSize" value="9"/>
+		<option set="setPiePosition" value="180, 165"/>
+		<option set="setShowXValues" value="false"/>
+		<option set="setLegend" value="'#99CDFB', 'Papers where authors found'"/>
+		<option set="setLegend" value="'#3366FB', 'Papers which cite from other articles'"/>
+		<option set="setLegend" value="'#0000FA', 'Papers which cite from news'"/>
+		<option set="setLegend" value="'#F8CC00', 'Papers which lack crucial'"/>
+		<option set="setLegend" value="'#F89900', 'Papers with different conclusion'"/>
+		<option set="setLegend" value="'#F76600', 'Papers with useful information'"/>
+		<option set="setLegendShow" value="true"/>
+		<option set="setLegendFontFamily" value="'Times New Roman'"/>
+		<option set="setLegendFontSize" value="10"/>
+		<option set="setLegendPosition" value="350, 120"/>
+		<option set="setPieAngle" value="30"/>
+		<option set="set3D" value="true"/>
+	</optionset>
+</JSChart>

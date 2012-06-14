@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="pie">
+		<data unit="Jan" value="2"/>
+		<data unit="Feb" value="1"/>
+		<data unit="Mar" value="3"/>
+		<data unit="Apr" value="6"/>
+		<data unit="May" value="8"/>
+		<data unit="Jun" value="10"/>
+		<data unit="Jul" value="9"/>
+		<data unit="Aug" value="8"/>
+		<data unit="Sep" value="5"/>
+		<data unit="Oct" value="6"/>
+		<data unit="Nov" value="2"/>
+		<data unit="Dec" value="4"/>
+	</dataset>
+	<colorset>
+		<color value="#FFCC00"/>
+		<color value="#FFFF00"/>
+		<color value="#CCFF00"/>
+		<color value="#99FF00"/>
+		<color value="#33FF00"/>
+		<color value="#00FF66"/>
+		<color value="#00FF99"/>
+		<color value="#00FFCC"/>
+		<color value="#FF0000"/>
+		<color value="#FF3300"/>
+		<color value="#FF6600"/>
+		<color value="#FF9900"/>
+	</colorset>
+	<optionset>
+		<option set="setPiePosition" value="308, 170"/>
+		<option set="setPieRadius" value="95"/>
+		<option set="setPieUnitsFontSize" value="8"/>
+		<option set="setPieUnitsColor" value="'#474747'"/>
+		<option set="setPieValuesColor" value="'#474747'"/>
+		<option set="setPieValuesOffset" value="-10"/>
+		<option set="setTitleColor" value="'#fff'"/>
+		<option set="setSize" value="616, 321"/>
+		<option set="setBackgroundImage" value="'chart_bg.jpg'"/>
+	</optionset>
+</JSChart>

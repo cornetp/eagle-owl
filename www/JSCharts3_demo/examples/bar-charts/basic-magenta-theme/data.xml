@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="bar">
+		<data unit="2003" value="2.6"/>
+		<data unit="2004" value="4.5"/>
+		<data unit="2005" value="2"/>
+		<data unit="2006" value="1.5"/>
+		<data unit="2007" value="3"/>
+		<data unit="2008" value="5.2"/>
+	</dataset>
+	<colorset>
+		<color value="#7979DB"/>
+		<color value="#7952E9"/>
+		<color value="#792BC8"/>
+		<color value="#792BA1"/>
+		<color value="#792BA1"/>
+		<color value="#792B79"/>
+	</colorset>
+	<optionset>
+		<option set="setAxisValuesColor" value="'#008'"/>
+		<option set="setAxisColor" value="'#ABABAB'"/>
+		<option set="setAxisWidth" value="1"/>
+		<option set="setAxisValuesColor" value="'#858585'"/>
+		<option set="setAxisNameColor" value="'#858585'"/>
+		<option set="setBarBorderColor" value="'#bbb'"/>
+		<option set="setBarOpacity" value="0.8"/>
+		<option set="setBarSpacingRatio" value="50"/>
+		<option set="setBarValues" value="false"/>
+		<option set="setTitleColor" value="'#928888'"/>
+		<option set="setGridColor" value="'#ABABAB'"/>
+	</optionset>
+</JSChart>

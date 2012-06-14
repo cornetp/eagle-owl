@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="line">
+		<data unit="10" value="2"/>
+		<data unit="15" value="0"/>
+		<data unit="18" value="3"/>
+		<data unit="19" value="6"/>
+		<data unit="20" value="8.5"/>
+		<data unit="25" value="10"/>
+		<data unit="30" value="9"/>
+		<data unit="35" value="8"/>
+		<data unit="40" value="5"/>
+		<data unit="45" value="6"/>
+		<data unit="50" value="2.5"/>
+	</dataset>
+	<optionset>
+		<option set="setAxisColor" value="'#656565'"/>
+		<option set="setAxisNameColor" value="'#4A4A4A'"/>
+		<option set="setAxisNameFontSize" value="10"/>
+		<option set="setAxisNameX" value="'Horizontal axis values'"/>
+		<option set="setAxisNameY" value="'Vertical axis'"/>
+		<option set="setAxisPaddingBottom" value="60"/>
+		<option set="setAxisPaddingLeft" value="180"/>
+		<option set="setAxisPaddingRight" value="170"/>
+		<option set="setAxisPaddingTop" value="65"/>
+		<option set="setAxisValuesColor" value="'#656565'"/>
+		<option set="setAxisValuesNumberX" value="6"/>
+		<option set="setGrid" value="false"/>
+		<option set="setLabelY" value="[0, 'Low']"/>
+		<option set="setLabelY" value="[5, 'Medium']"/>
+		<option set="setLabelY" value="[10, 'High']"/>
+		<option set="setLineColor" value="'#8638D5'"/>
+		<option set="setShowYValues" value="false"/>
+		<option set="setTitle" value="'A customized chart'"/>
+		<option set="setTitleColor" value="'#505050'"/>
+		<option set="setSize" value="616, 321"/>
+		<option set="setTextPaddingBottom" value="20"/>
+		<option set="setTextPaddingLeft" value="120"/>
+		<option set="setTextPaddingTop" value="15"/>
+		<option set="setFlagRadius" value="6"/>
+		<option set="setTooltip" value="[25, 'Tooltip for value 25 on X axis']"/>
+		<option set="setTooltip" value="[40, 'Tooltip for value 40 on X axis']"/>
+		<option set="setBackgroundImage" value="'chart_bg.jpg'"/>
+	</optionset>
+</JSChart>

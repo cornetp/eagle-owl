@@ -1,0 +1,74 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="line" id="blue">
+		<data unit="1" value="80"/>
+		<data unit="2" value="40"/>
+		<data unit="3" value="60"/>
+		<data unit="4" value="65"/>
+		<data unit="5" value="50"/>
+		<data unit="6" value="50"/>
+		<data unit="7" value="60"/>
+		<data unit="8" value="80"/>
+		<data unit="9" value="150"/>
+		<data unit="10" value="100"/>
+	</dataset>
+	<dataset type="line" id="green">
+		<data unit="1" value="100"/>
+		<data unit="2" value="55"/>
+		<data unit="3" value="80"/>
+		<data unit="4" value="115"/>
+		<data unit="5" value="80"/>
+		<data unit="6" value="70"/>
+		<data unit="7" value="30"/>
+		<data unit="8" value="130"/>
+		<data unit="9" value="160"/>
+		<data unit="10" value="170"/>
+	</dataset>
+	<dataset type="line" id="gray">
+		<data unit="1" value="150"/>
+		<data unit="2" value="25"/>
+		<data unit="3" value="100"/>
+		<data unit="4" value="80"/>
+		<data unit="5" value="20"/>
+		<data unit="6" value="65"/>
+		<data unit="7" value="0"/>
+		<data unit="8" value="155"/>
+		<data unit="9" value="190"/>
+		<data unit="10" value="200"/>
+	</dataset>
+	<optionset>
+		<option set="setSize" value="550, 300"/>
+		<option set="setAxisValuesNumberY" value="5"/>
+		<option set="setIntervalStartY" value="0"/>
+		<option set="setIntervalEndY" value="200"/>
+		<option set="setLabelX" value="[2,'p1']"/>
+		<option set="setLabelX" value="[4,'p2']"/>
+		<option set="setLabelX" value="[6,'p3']"/>
+		<option set="setLabelX" value="[8,'p4']"/>
+		<option set="setLabelX" value="[10,'p5']"/>
+		<option set="setAxisValuesNumberX" value="5"/>
+		<option set="setShowXValues" value="false"/>
+		<option set="setTitleColor" value="'#454545'"/>
+		<option set="setAxisValuesColor" value="'#454545'"/>
+		<option set="setLineColor" value="'#A4D314', 'green'"/>
+		<option set="setLineColor" value="'#BBBBBB', 'gray'"/>
+		<option set="setTooltip" value="[1,' ']"/>
+		<option set="setTooltip" value="[2,' ']"/>
+		<option set="setTooltip" value="[3,' ']"/>
+		<option set="setTooltip" value="[4,' ']"/>
+		<option set="setTooltip" value="[5,' ']"/>
+		<option set="setTooltip" value="[6,' ']"/>
+		<option set="setTooltip" value="[7,' ']"/>
+		<option set="setTooltip" value="[8,' ']"/>
+		<option set="setTooltip" value="[9,' ']"/>
+		<option set="setTooltip" value="[10,' ']"/>
+		<option set="setFlagColor" value="'#9D16FC'"/>
+		<option set="setFlagRadius" value="4"/>
+		<option set="setAxisPaddingRight" value="100"/>
+		<option set="setLegendShow" value="true"/>
+		<option set="setLegendPosition" value="490, 80"/>
+		<option set="setLegendForLine" value="'blue', 'Click me'"/>
+		<option set="setLegendForLine" value="'green', 'Click me'"/>
+		<option set="setLegendForLine" value="'gray', 'Click me'"/>
+	</optionset>
+</JSChart>

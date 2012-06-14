@@ -1,0 +1,22 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="../../../sources/jscharts.js"></script>
+
+</head>
+<body>
+
+<div id="graph">Loading graph...</div>
+
+<script type="text/javascript">
+	
+	var myChart = new JSChart('graph', 'pie');
+	myChart.setDataXML("data.xml");
+	myChart.draw();
+	
+</script>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="../../../sources/jscharts.js"></script>
+
+</head>
+<body>
+
+<div id="graph">Loading graph...</div>
+
+<script type="text/javascript">
+	var myData = new Array(['North America', 69], ['Australia/Oceania', 54], ['Europe', 40], ['Latin America', 20], ['Asia', 12], ['Middle East', 10], ['Africa', 4], ['World average', 18]);
+	var colors = ['#A5DBFC', '#CDE8FA', '#D9F0FA', '#0099F9', '#1BA4F9', '#41B2FA', '#63C1FA', '#83CDFA'];
+	var myChart = new JSChart('graph', 'pie');
+	myChart.setDataArray(myData);
+	myChart.colorizePie(colors);
+	myChart.setTitle('Internet penetration by World Region in 2007 (%)');
+	myChart.setTitleColor('#8E8E8E');
+	myChart.setTitleFontSize(11);
+	myChart.setTextPaddingTop(30);
+	myChart.setPieUnitsColor('#8F8F8F');
+	myChart.setPieValuesColor('#6E6E6E');
+	myChart.setSize(616, 321);
+	myChart.setPiePosition(308, 190);
+	myChart.setPieRadius(85);
+	myChart.setBackgroundImage('chart_bg.jpg');
+	myChart.draw();
+</script>
+
+</body>
+</html>

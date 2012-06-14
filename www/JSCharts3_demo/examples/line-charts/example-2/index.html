@@ -1,0 +1,62 @@
+<html>
+<head>
+
+<title>JSChart</title>
+
+<script type="text/javascript" src="../../../sources/jscharts.js"></script>
+
+</head>
+<body>
+
+<div id="graph">Loading graph...</div>
+
+<script type="text/javascript">
+	var myData = new Array([1997, 7.80], [1998, 4.80], [1999, 6.50], [2000, 6.10], [2001, 4.40], [2002, 5.80], [2003, 4.00], [2004, 8.50], [2005, 8.90], [2006, 9.20]);
+	var myChart = new JSChart('graph', 'line');
+	myChart.setDataArray(myData);
+	myChart.setTitle('India GDP');
+	myChart.setTitleColor('#8E8E8E');
+	myChart.setTitleFontSize(11);
+	myChart.setAxisNameX('');
+	myChart.setAxisNameY('');
+	myChart.setAxisColor('#8420CA');
+	myChart.setAxisValuesColor('#949494');
+	myChart.setAxisPaddingLeft(100);
+	myChart.setAxisPaddingRight(120);
+	myChart.setAxisPaddingTop(50);
+	myChart.setAxisPaddingBottom(40);
+	myChart.setAxisValuesDecimals(3);
+	myChart.setAxisValuesNumberX(10);
+	myChart.setShowXValues(false);
+	myChart.setGridColor('#C5A2DE');
+	myChart.setLineColor('#BBBBBB');
+	myChart.setLineWidth(2);
+	myChart.setFlagColor('#9D12FD');
+	myChart.setFlagRadius(4);
+	myChart.setTooltip([1997, 'GDP 7.80']);
+	myChart.setTooltip([1998, 'GDP 4.80']);
+	myChart.setTooltip([1999, 'GDP 6.50']);
+	myChart.setTooltip([2000, 'GDP 6.10']);
+	myChart.setTooltip([2001, 'GDP 4.40']);
+	myChart.setTooltip([2002, 'GDP 5.80']);
+	myChart.setTooltip([2003, 'GDP 4.00']);
+	myChart.setTooltip([2004, 'GDP 8.50']);
+	myChart.setTooltip([2005, 'GDP 8.90']);
+	myChart.setTooltip([2006, 'GDP 9.20']);
+	myChart.setLabelX([1997, '1997']);
+	myChart.setLabelX([1998, '1998']);
+	myChart.setLabelX([1999, '1999']);
+	myChart.setLabelX([2000, '2000']);
+	myChart.setLabelX([2001, '2001']);
+	myChart.setLabelX([2002, '2002']);
+	myChart.setLabelX([2003, '2003']);
+	myChart.setLabelX([2004, '2004']);
+	myChart.setLabelX([2005, '2005']);
+	myChart.setLabelX([2006, '2006']);
+	myChart.setSize(616, 321);
+	myChart.setBackgroundImage('chart_bg.jpg');
+	myChart.draw();
+</script>
+
+</body>
+</html>

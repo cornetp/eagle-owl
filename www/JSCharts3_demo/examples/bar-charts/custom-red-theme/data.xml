@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<JSChart>
+	<dataset type="bar">
+		<data unit="Jan" value="2"/>
+		<data unit="Feb" value="1"/>
+		<data unit="Mar" value="3"/>
+		<data unit="Apr" value="6"/>
+		<data unit="May" value="8"/>
+		<data unit="Jun" value="10"/>
+		<data unit="Jul" value="9"/>
+		<data unit="Aug" value="8"/>
+		<data unit="Sep" value="5"/>
+		<data unit="Oct" value="6"/>
+		<data unit="Nov" value="2"/>
+		<data unit="Dec" value="4"/>
+	</dataset>
+	<colorset>
+		<color value="#CE0000"/>
+		<color value="#EF2323"/>
+		<color value="#D20202"/>
+		<color value="#A70000"/>
+		<color value="#850000"/>
+		<color value="#740000"/>
+		<color value="#530000"/>
+		<color value="#850000"/>
+		<color value="#B00000"/>
+		<color value="#9C0404"/>
+		<color value="#CE0000"/>
+		<color value="#BA0000"/>
+	</colorset>
+	<optionset>
+		<option set="setAxisColor" value="'#9D9F9D'"/>
+		<option set="setAxisWidth" value="1"/>
+		<option set="setAxisNameX" value="'Months'"/>
+		<option set="setAxisNameY" value="'Values'"/>
+		<option set="setAxisNameColor" value="'#655D5D'"/>
+		<option set="setAxisNameFontSize" value="9"/>
+		<option set="setAxisPaddingLeft" value="50"/>
+		<option set="setAxisValuesDecimals" value="1"/>
+		<option set="setAxisValuesColor" value="'#9C1919'"/>
+		<option set="setTextPaddingLeft" value="0"/>
+		<option set="setBarValuesColor" value="'#9C1919'"/>
+		<option set="setBarBorderWidth" value="0"/>
+		<option set="setTitleColor" value="'#8C8382'"/>
+		<option set="setGridColor" value="'#5D5F5D'"/>
+	</optionset>
+</JSChart>
