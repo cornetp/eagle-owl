@@ -127,9 +127,9 @@ int main(int argc, char *argv[])
     printhelp(argv[0]);
     return -1;
   }
-  sqlite3_open(argv[1], &db);
-  if(db == 0) {
-    printf("Could not open database %s", argv[1]);
+  int ret = sqlite3_open_v2(argv[1], &db, SQLITE_OPEN_READONLY, NULL);
+  if(ret != SQLITE_OK || db == 0) {
+    printf("Could not open database %s: open returned %d\n", argv[1], ret);
     return 1;
   }
 
@@ -141,6 +141,6 @@ int main(int argc, char *argv[])
 
   sqlite3_close(db);
 
-  return 1;
+  return 0;
 }
 
