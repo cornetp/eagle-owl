@@ -1,12 +1,15 @@
-PROG = db_test
+PROG = db_import
 
 CC	= $(CROSS_COMPILE)gcc
 LD	= $(CROSS_COMPILE)gcc
 CFLAGS	= -Wall -Isqlite-autoconf-3071300
 LIBS	= -lpthread -ldl
 
+ifdef DEBUG
+  CFLAGS += -DDEBUG
+endif
 
-OBJS := db_test.o sqlite-autoconf-3071300/sqlite3.o
+OBJS := $(PROG).o sqlite-autoconf-3071300/sqlite3.o
 
 all: $(PROG)
 
