@@ -6,7 +6,7 @@ CFLAGS	:= -W -Wall -Wno-multichar -O3 #-Werror
 LDFLAGS :=
 LIBS	:= -lusb
 
-OBJ_CM160 := cm160.o
+OBJ_CM160 := cm160.o usb_utils.o
 
 all: cm160
 
