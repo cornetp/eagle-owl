@@ -1,4 +1,5 @@
 PROG = db_import
+#PROG = db_test
 
 CC	= $(CROSS_COMPILE)gcc
 LD	= $(CROSS_COMPILE)gcc

@@ -85,8 +85,10 @@ static int get_day_of_week(int y, int m, int d)
   return (y + y/4 - y/100 + y/400 + t[m-1] + d - 1) % 7;
 }
 
-static float w_total = 0;
-static float we_total = 0;
+static double w_total = 0;
+static double we_total = 0;
+static double total_2011 = 0;
+static double total_2012 = 0;
 int get_we_conso_cb(void *p_data, int num_fields, char **p_fields, char **p_col_names) 
 {
   if(num_fields != 5) // year, month, day, hour, conso
@@ -99,6 +101,11 @@ int get_we_conso_cb(void *p_data, int num_fields, char **p_fields, char **p_col_
     w_total += atof(p_fields[4]);
   else
     we_total += atof(p_fields[4]);
+
+  if(atoi(p_fields[0]) == 2011)
+    total_2011 += atof(p_fields[4]);
+  else
+    total_2012 += atof(p_fields[4]);
   return 0;
 };
 
@@ -136,6 +143,9 @@ int main(int argc, char *argv[])
   compute_total_year();
   //compute_total_month();
   get_we_conso();
+  printf("total 2011     = %f\n", total_2011);
+  printf("total 2012     = %f\n", total_2012);
+
   printf("total week     = %f\n", w_total);
   printf("total weekends = %f\n", we_total);
 
