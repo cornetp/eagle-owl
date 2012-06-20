@@ -56,7 +56,7 @@
 */
 // The language array - change these values to your language to better fit your needs!
 g_l = [];
-g_l["MONTHS"] = ["Janaury","February","March","April","May","June","July","August","September","October","November","December"];
+g_l["MONTHS"] = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 g_l["DAYS_3"] = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 g_l["MONTH_FWD"] = "Move a month forward";
 g_l["MONTH_BCK"] = "Move a month backward";
@@ -113,6 +113,29 @@ String.prototype.rtrim = function() {
 String.prototype.strpad=function(){
 	return (!isNaN(this) && this.toString().length==1)?"0"+this:this;
 };
+
+
+function getXMLHttpRequest() {
+	var xhr = null;
+	
+	if (window.XMLHttpRequest || window.ActiveXObject) {
+		if (window.ActiveXObject) {
+			try {
+				xhr = new ActiveXObject("Msxml2.XMLHTTP");
+			} catch(e) {
+				xhr = new ActiveXObject("Microsoft.XMLHTTP");
+			}
+		} else {
+			xhr = new XMLHttpRequest(); 
+		}
+	} else {
+		alert("Votre navigateur ne supporte pas l'objet XMLHTTPRequest...");
+		return null;
+	}
+	
+	return xhr;
+}
+
 
 JsDatePick = function(configurationObject){
 	if (document.all){
@@ -283,6 +306,15 @@ JsDatePick.prototype.setConfiguration = function(aConf){
 		this.currentYear 	= this.oCurrentDay.year;
 		this.currentMonth	= this.oCurrentDay.month;
 		this.currentDay		= this.oCurrentDay.day;
+	}
+	else{
+		this.currentYear 	= this.oConfiguration.selectedDate.year;
+		this.currentMonth	= this.oConfiguration.selectedDate.month;
+		this.currentDay		= this.oConfiguration.selectedDate.day;
+		this.selectedDayObject.year = this.oConfiguration.selectedDate.year;
+		this.selectedDayObject.month = this.oConfiguration.selectedDate.month;
+		this.selectedDayObject.day = this.oConfiguration.selectedDate.day;
+		this.flag_aDayWasSelected = true;
 	}
 };
 
@@ -659,17 +691,66 @@ JsDatePick.prototype.executePopulationDelegateIfExists = function(){
 	}
 };
 
+function data_info_cb(oData, aMainBox)
+{
+	days = aMainBox.childNodes;
+
+	var has_data = new Array(31);
+	for(i=0; i<days.length; i++)
+		has_data[i] = 0;
+
+	var nodes = oData.getElementsByTagName('day');
+
+	for (var i=0, c=nodes.length; i<c; i++) {
+		var d = nodes[i].childNodes[0].nodeValue;
+		has_data[parseInt(d)] = 1;
+	}
+
+	for(i=0; i<days.length; i++)
+	{
+		if(!days[i].firstChild)
+			continue;
+		d = parseInt(days[i].firstChild.data);
+		if(has_data[d] == 1)
+                {
+			days[i].setAttribute("hasData", 1);
+		}
+		else
+		{
+			days[i].setAttribute("hasData", 0);
+			days[i].onmouseout();
+		}
+	}
+}
+
+JsDatePick.prototype.get_data_info = function(callback, year, month, aMainBox)
+{
+	var xhr = getXMLHttpRequest();
+
+	that = this;
+	xhr.onreadystatechange = function() {
+	        if (xhr.readyState == 4 && (xhr.status == 200 || xhr.status == 0)) {
+			callback.call(that, xhr.responseXML, aMainBox);
+			//callback.call(that, xhr.responseText, aMainBox);
+	        }
+	};
+
+	xhr.open("POST", "../listValidDays.php", false);
+	xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+	xhr.send("year="+year+"&month="+month);
+}
+
 JsDatePick.prototype.populateMainBox = function(aMainBox){
 	var d = document,aDayDiv,aTextNode,columnNumber = 1,disabledDayFlag = false,cmpMonth = this.currentMonth-1,oDay,iStamp,skipDays,i,currentColorScheme;
 	
 	oDay = new Date(this.currentYear, cmpMonth, 1,1,0,0);
 	iStamp = oDay.getTime();
-	
+
 	this.flag_DayMarkedBeforeRepopulation = false;
 //	this.setControlBarText(this.monthsTextualRepresentation[cmpMonth] + ", " + this.currentYear);
 	this.setControlBarMonth(this.monthsTextualRepresentation[cmpMonth]);
 	this.setControlBarYear(this.currentYear);
-	
+
 	skipDays = parseInt(oDay.getDay())-this.oConfiguration.weekStartDay;
 	if (skipDays < 0){
 		skipDays = skipDays + 7;
@@ -727,7 +808,10 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 
 		aDayDiv.onmouseover = function(){
 			var gRef = JsDatePick.getCalInstanceById(this.getAttribute("globalNumber")),currentColorScheme;
-			currentColorScheme = gRef.getCurrentColorScheme();
+			if (parseInt(this.getAttribute("hasData")) == 1)
+				currentColorScheme = gRef.getCurrentColorScheme();
+			else
+				currentColorScheme = "grey";
 			
 			if (parseInt(this.getAttribute("isSelected")) == 1){
 				return;
@@ -746,7 +830,10 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 		
 		aDayDiv.onmouseout = function(){
 			var gRef = JsDatePick.getCalInstanceById(this.getAttribute("globalNumber")),currentColorScheme;
-			currentColorScheme = gRef.getCurrentColorScheme();
+			if (parseInt(this.getAttribute("hasData")) == 1)
+				currentColorScheme = gRef.getCurrentColorScheme();
+			else
+				currentColorScheme = "grey";
 			
 			if (parseInt(this.getAttribute("isSelected")) == 1){
 				return;
@@ -765,7 +852,10 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 		
 		aDayDiv.onmousedown = function(){
 			var gRef = JsDatePick.getCalInstanceById(this.getAttribute("globalNumber")),currentColorScheme;
-			currentColorScheme = gRef.getCurrentColorScheme();
+			if (parseInt(this.getAttribute("hasData")) == 1)
+				currentColorScheme = gRef.getCurrentColorScheme();
+			else
+				currentColorScheme = "grey";
 			
 			if (parseInt(this.getAttribute("isSelected")) == 1){
 				return;
@@ -784,7 +874,10 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 		
 		aDayDiv.onmouseup = function(){
 			var gRef = JsDatePick.getCalInstanceById(this.getAttribute("globalNumber")),currentColorScheme;
-			currentColorScheme = gRef.getCurrentColorScheme();
+			if (parseInt(this.getAttribute("hasData")) == 1)
+				currentColorScheme = gRef.getCurrentColorScheme();
+			else
+				currentColorScheme = "grey";
 			
 			if (parseInt(this.getAttribute("isJsDatePickDisabled")) == 1){
 				return;
@@ -846,6 +939,8 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 	}
 	
 	this.lastPostedDay = null;
+	
+	this.get_data_info(data_info_cb, this.currentYear, this.currentMonth, aMainBox);
 	
 	return aMainBox;
 };
