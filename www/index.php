@@ -198,7 +198,7 @@ $year = 0;
 $month= 0;
 $day  = 0;
 $graph_type = 'bar'; // graph type : bar, line or pie
-$title = "All";
+$title = "Total";
 $axis_x_name = '';
 if(isset($_GET['year']))
 {
@@ -232,8 +232,8 @@ else
 
 // Following lines are to select a valid date in the calendar
 if(!$year) $year = date('Y');
-if(!$month) $month = 1;
-if(!$day) $day = 1;
+if(!$month) $month = date('m');
+//if(!$day) $day = date('d');
 ?>
 
 <script language="JavaScript" type="text/javascript">
@@ -277,8 +277,8 @@ function draw_chart(type, title, axis_x_name)
     myChart.setBarColor('#88FF88', 3)
     myChart.setBarColor('#FF8888', 2);
     myChart.setLegendForBar(1, 'Total');
-    myChart.setLegendForBar(2, 'normal tariff');
-    myChart.setLegendForBar(3, 'night & we');
+    myChart.setLegendForBar(2, 'Jour');
+    myChart.setLegendForBar(3, 'Nuit & week-end');
     myChart.setLegendShow(true);
     myChart.setLegendPosition('top middle');
   }
@@ -308,8 +308,8 @@ function draw_we_chart(title, axis_x_name)
   myChart.setTitleColor('#FFFFFF');
   myChart.setSize(800, 200);
   myChart.setBackgroundColor('#222244');
-  myChart.setLegend('#FF8888', 'normal tariff');
-  myChart.setLegend('#88FF88', 'night & week-end');
+  myChart.setLegend('#FF8888', 'Jour');
+  myChart.setLegend('#88FF88', 'Nuit et week-end');
   myChart.setPieRadius(95);
   myChart.setShowXValues(false);
   myChart.setLegendShow(true);
@@ -369,12 +369,9 @@ echo "<div id=\"graph\">";
 if(!$data)
   echo "No data for \"$title\"";
 else{
-  echo "<script language=javascript>draw_chart('$graph_type', '$title','$axis_x_name')</script></div>";
-}
-if($wedata)
-{
-  echo "<div id=\"wegraph\">";
-  echo "<script language=javascript>draw_we_chart('$title','$axis_x_name')</script></div>";
+  echo "<div id=\"graph\"><script language=javascript>draw_chart('$graph_type', '$title','$axis_x_name')</script></div>";
+  if($wedata)
+    echo "<div id=\"wegraph\"><script language=javascript>draw_we_chart('Tarifs','$axis_x_name')</script></div>";
 }
 
 ?>

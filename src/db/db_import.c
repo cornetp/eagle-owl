@@ -32,8 +32,8 @@ static inline int get_day_of_week(int y, int m, int d)
 }
 
 static inline bool is_full_tariff(int hour)
-{
-  return (hour > 7 && hour < 23)?true:false;
+{ // TODO: get info from energy_tariffv2 table!
+  return (hour >= 8 && hour < 23)?true:false;
 }
 
 // checks if the elem "name" is present in the table

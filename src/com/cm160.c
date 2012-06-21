@@ -231,33 +231,47 @@ static int handle_device(int dev_id)
   return 0;
 }
 
+static void demonize()
+{
+  switch (fork())
+  {
+    case -1:
+      fprintf(stderr, "can't start daemon\n");
+      exit(EXIT_FAILURE);
+  
+    case  0: // child: detach from tty
+      if (setsid() == -1)
+      {
+        fprintf(stderr, "can't detach from tty\n");
+        exit(EXIT_FAILURE);
+      }
+      break;
+    default: // parent: exit
+      exit(EXIT_SUCCESS);
+  }
+}
+
+
 int main(int argc, char *argv[])
 {
   int i, reset=0;
-  int dev_cnt = scan_usb();
-  printf("Found %d compatible device%s\n", dev_cnt, dev_cnt>1?"s":"");
+  if(argc>1 && (strcmp(argv[1], "-d")==0) )
+    demonize();
 
-  if(argc>1 && (strcmp(argv[1], "-r")==0) )
-  {
-    printf("reset devices!\n");
-    reset = 1;
-  }
+  int dev_cnt = 0;
+  while((dev_cnt = scan_usb()) == 0)
+    sleep(2);
+  printf("Found %d compatible device%s\n", dev_cnt, dev_cnt>1?"s":"");
 
   for(i = 0; i < dev_cnt; i++)
   {
     // do stuff with the detected device...
     if(!(g_devices[i].hdev = usb_open(g_devices[i].usb_dev)))
     {
-      printf("failed to open device\n");
+      fprintf(stderr, "failed to open device\n");
       break;
     }
-    if(reset)
-    {
-      int ret = usb_reset(g_devices[i].hdev);
-      printf("usb_reset returned %d\n", ret);
-    }
-    else
-      handle_device(i);
+    handle_device(i);
 
     usb_close(g_devices[i].hdev);
   } 

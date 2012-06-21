@@ -34,8 +34,6 @@ static int scan_device(struct usb_device *dev, int *dev_cnt)
 
 int scan_usb()
 {
-  printf("%s() called\n", __FUNCTION__);
-
   int dev_cnt = 0;
 
   usb_init();
