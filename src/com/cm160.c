@@ -1,12 +1,18 @@
 #include <stdio.h>
+#include <stdbool.h>
 #include <string.h>
 #include <usb.h>
+#include <pthread.h>
 
 #include "cm160.h"
 #include "usb_utils.h"
+#include "db.h"
 
 #ifndef min
-  #define min(a,b) (((a) < (b)) ? (a) : (b))
+  #define min(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+#ifndef max
+  #define max(a,b) (((a) > (b)) ? (a) : (b))
 #endif
 
 static char ID_MSG[11]   = { 0xA9, 0x49, 0x44, 0x54, 0x43, 0x4D, 0x56, 0x30, 0x30, 0x31, 0x01 };
@@ -15,11 +21,37 @@ static char WAIT_MSG[11] = { 0xA9, 0x49, 0x44, 0x54, 0x57, 0x41, 0x49, 0x54, 0x5
 #define FRAME_ID_LIVE 0x51 
 #define FRAME_ID_DB   0x59 // value used to store in the DB (ch1_kw_avg)
 
+#define HISTORY_SIZE 65536 // 30 * 24 * 60 = 43200 theoric history size
+
 //struct usb_device *g_devices[MAX_DEVICES];
 struct cm160_device g_devices[MAX_DEVICES];
 
+/* prototype for thread routine */
+void insert_db_history(void *num_elems)
+{
+  int i;
+  printf("insert %d elems\n", num_elems);
+  for(i=0; i<num_elems; i++)
+  {
+    unsigned char *frame = insert_db_history[i];
+    int volts = 230;
+    int year = frame[1]+2000;
+    int month = frame[2];
+    int day = frame[3];
+    int hour = frame[4];
+    int minutes = frame[5];
+    //float cost = (frame[6]+(frame[7]<<8))/100.0;
+    float amps = (frame[8]+(frame[9]<<8))*0.07;
+    float watts = amps * volts;
+    db_insert_hist(year, month, day, hour, minutes, watts, amps);
+  }
+}
+
 static int process_frame(int dev_id, unsigned char *frame)
 {
+  static bool receive_history = true;
+  static int id = 0;
+  static char history[HISTORY_SIZE][11];
   int i;
   unsigned char data[1];
   unsigned int checksum = 0;
@@ -28,13 +60,13 @@ static int process_frame(int dev_id, unsigned char *frame)
 
   if(strncmp((char *)frame, ID_MSG, 11) == 0)
   {
-    printf("received ID MSG\n");
+//    printf("received ID MSG\n");
     data[0]=0x5A;
     usb_bulk_write(hdev, epout, (const char *)&data, sizeof(data), 1000);
   }
   else if(strncmp((char *)frame, WAIT_MSG, 11) == 0)
   {
-    printf("received WAIT MSG\n");
+//    printf("received WAIT MSG\n");
     data[0]=0xA5;
     usb_bulk_write(hdev, epout, (const char *)&data, sizeof(data), 1000);
   }
@@ -68,8 +100,36 @@ static int process_frame(int dev_id, unsigned char *frame)
     float amps = (frame[8]+(frame[9]<<8))*0.07;
     float watts = amps * volts;
 
-    printf("%02d/%02d/%04d %02d:%02d : %f kW %s\n", day, month, year, hour, minutes, watts,
-           (frame[0]==FRAME_ID_LIVE)?" < LIVE":" < DB");
+    if(frame[0]==FRAME_ID_DB)
+    {
+      if(receive_history && id < HISTORY_SIZE)
+      {
+        if(id == 0)
+          printf("downloading history...\n");
+        else if(id%10 == 0)
+        {
+          printf("\r %.1f%%", max(100, 100*((double)id/(30*24*60))));
+          fflush(stdout);
+        }
+        memcpy(history[id++], frame, 11);
+      }
+      else
+        db_insert_hist(year, month, day, hour, minutes, watts, amps);
+    }
+    else
+    {
+      if(receive_history)
+      {
+        printf("\rdownloading history... 100%%\n");
+        fflush(stdout);
+        receive_history = false;
+        // insert the history into the db
+        pthread_t thread;
+        pthread_create(&thread, NULL, (void *)&insert_db_history, (void *)id);
+      }
+      printf("%02d/%02d/%04d %02d:%02d : %f kW %s\n", day, month, year, hour, minutes, watts,
+        (frame[0]==FRAME_ID_LIVE)?" < LIVE":" < DB");
+    }
   }
   return 0;
 }
@@ -79,7 +139,7 @@ static int io_thread(int dev_id)
   int ret;
   usb_dev_handle *hdev = g_devices[dev_id].hdev;
   int epin = g_devices[dev_id].epin;
-  unsigned char buffer[11*1024];
+  unsigned char buffer[512];
   static unsigned char word[11];
   static int remaining = 11;
 
@@ -95,8 +155,9 @@ static int io_thread(int dev_id)
       printf("bulk_read returned %d (%s)\n", ret, usb_strerror());
       return -1;
     }
-    printf("read %d bytes: \n", ret);
+//    printf("read %d bytes: \n", ret);
     unsigned char *bufptr = (unsigned char *)buffer;
+/*
     if(remaining<11)
     {
       int rest = min(remaining, ret);
@@ -108,7 +169,7 @@ static int io_thread(int dev_id)
         remaining = 11;
       }
       ret -= rest;
-    }
+    }*/
 
     {
       int nb_words = ret/11;

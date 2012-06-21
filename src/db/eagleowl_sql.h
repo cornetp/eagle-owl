@@ -115,4 +115,8 @@
 #define INSERT_STAT_HOUR   "INSERT INTO energy_hour_stat "   \
                            " VALUES (%d, %d, %d, %d, %d, %f, %f, %f, %d)"
 
+#define INSERT_HISTORY_TBL "INSERT OR IGNORE INTO energy_history " \
+                           " VALUES (%d, %d, %d, %d, %d, %d," \
+                           " %f, %f, %d, %d, %f, %f, %f, %f);"
+
 #endif//__EAGLEOWL_SQL_H__
