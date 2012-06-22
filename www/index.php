@@ -191,8 +191,39 @@ function get_weekend_data($db, $year=0, $month=0, $day=0)
   return $arr;
 }
 
-$db = new SQLite3('/home/cornetp/vagrant/lucid32/eagle-owl/src/db/eagleowl.db');
-$stat_db = new SQLite3('/home/cornetp/vagrant/lucid32/eagle-owl/src/db/eagleowl_stat.db');
+$config = parse_ini_file('/etc/eagleowl.conf', true);
+
+$root_path = "";
+$db_subdir = "";
+$main_db   = "eagleowl.db";
+$stat_db   = "eagleowl_stat.db";
+
+if(isset($config['install_path']))
+  $root_path = $config['install_path'];
+if(isset($config['db_subdir']))
+  $db_subdir = $config['db_subdir'];
+if(isset($config['main_db_name']))
+  $main_db = $config['main_db_name'];
+if(isset($config['stat_db_name']))
+  $main_db = $config['stat_db_name'];
+
+if($root_path === "" || !is_dir($root_path))
+{
+  echo"invalid path \"$root_path\": set the correct install_path in /etc/eaglowl.conf";
+  exit();
+}
+if(!is_dir($root_path."/".$db_subdir))
+{
+  echo "invalid path \"$root_path/$db_subdir\": ";
+  echo "set the correct install_path and db_subdir in /etc/eaglowl.conf";
+  exit();
+}
+
+$main_db = $root_path."/".$db_subdir."/".$main_db;
+$stat_db = $root_path."/".$db_subdir."/".$stat_db;
+
+$db = new SQLite3($main_db);
+$stat_db = new SQLite3($stat_db);
 
 $year = 0;
 $month= 0;
