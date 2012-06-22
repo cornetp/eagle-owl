@@ -9,7 +9,7 @@
 #include "db.h"
 
 #ifndef min
-  #define min(a,b) (((a) > (b)) ? (a) : (b))
+  #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 #ifndef max
   #define max(a,b) (((a) > (b)) ? (a) : (b))
@@ -22,18 +22,21 @@ static char WAIT_MSG[11] = { 0xA9, 0x49, 0x44, 0x54, 0x57, 0x41, 0x49, 0x54, 0x5
 #define FRAME_ID_DB   0x59 // value used to store in the DB (ch1_kw_avg)
 
 #define HISTORY_SIZE 65536 // 30 * 24 * 60 = 43200 theoric history size
+static unsigned char history[HISTORY_SIZE][11];
 
 //struct usb_device *g_devices[MAX_DEVICES];
 struct cm160_device g_devices[MAX_DEVICES];
 
 /* prototype for thread routine */
-void insert_db_history(void *num_elems)
+void insert_db_history(void *data)
 {
   int i;
+  int num_elems = (int)data;
   printf("insert %d elems\n", num_elems);
+  printf("insert into db...\n");
   for(i=0; i<num_elems; i++)
   {
-    unsigned char *frame = insert_db_history[i];
+    unsigned char *frame = history[i];
     int volts = 230;
     int year = frame[1]+2000;
     int month = frame[2];
@@ -44,14 +47,17 @@ void insert_db_history(void *num_elems)
     float amps = (frame[8]+(frame[9]<<8))*0.07;
     float watts = amps * volts;
     db_insert_hist(year, month, day, hour, minutes, watts, amps);
+    printf("\r %.1f%%", min(100, 100*((double)i/num_elems)));
+    fflush(stdout);
   }
+  printf("\rinsert into db... 100%%\n");
+  fflush(stdout);
 }
 
 static int process_frame(int dev_id, unsigned char *frame)
 {
   static bool receive_history = true;
   static int id = 0;
-  static char history[HISTORY_SIZE][11];
   int i;
   unsigned char data[1];
   unsigned int checksum = 0;
@@ -96,7 +102,7 @@ static int process_frame(int dev_id, unsigned char *frame)
     int day = frame[3];
     int hour = frame[4];
     int minutes = frame[5];
-    float cost = (frame[6]+(frame[7]<<8))/100.0;
+    //float cost = (frame[6]+(frame[7]<<8))/100.0;
     float amps = (frame[8]+(frame[9]<<8))*0.07;
     float watts = amps * volts;
 
@@ -108,7 +114,7 @@ static int process_frame(int dev_id, unsigned char *frame)
           printf("downloading history...\n");
         else if(id%10 == 0)
         {
-          printf("\r %.1f%%", max(100, 100*((double)id/(30*24*60))));
+          printf("\r %.1f%%", min(100, 100*((double)id/(30*24*60))));
           fflush(stdout);
         }
         memcpy(history[id++], frame, 11);
@@ -140,8 +146,7 @@ static int io_thread(int dev_id)
   usb_dev_handle *hdev = g_devices[dev_id].hdev;
   int epin = g_devices[dev_id].epin;
   unsigned char buffer[512];
-  static unsigned char word[11];
-  static int remaining = 11;
+  unsigned char word[11];
 
   memset(buffer, 0, sizeof(buffer));
   memset(word, 0, sizeof(word));
@@ -157,37 +162,13 @@ static int io_thread(int dev_id)
     }
 //    printf("read %d bytes: \n", ret);
     unsigned char *bufptr = (unsigned char *)buffer;
-/*
-    if(remaining<11)
+    int nb_words = ret/11; // incomplete words are resent
+    while(nb_words--)
     {
-      int rest = min(remaining, ret);
-      memcpy((word+(11-remaining)), bufptr, rest);
-      remaining -= rest;
-      if(remaining == 0)
-      {
-        process_frame(dev_id, word);
-        remaining = 11;
-      }
-      ret -= rest;
-    }*/
-
-    {
-      int nb_words = ret/11;
-      int rest = ret%11;
-      while(nb_words--)
-      {
-        memcpy(word, bufptr, 11);
-        bufptr+=11;
-        process_frame(dev_id, word);
-      };
-/*  // usefull? seem that full word is retransmitted if not fully transmitted the first time.
-      if(rest)
-      {
-        printf("rest %d chars\n", rest);
-        memcpy(word, bufptr, rest);
-        remaining -= rest;
-      }*/
-    }
+      memcpy(word, bufptr, 11);
+      bufptr+=11;
+      process_frame(dev_id, word);
+    };
   }
   return 0;
 }
@@ -254,9 +235,11 @@ static void demonize()
 
 int main(int argc, char *argv[])
 {
-  int i, reset=0;
+  int i;
   if(argc>1 && (strcmp(argv[1], "-d")==0) )
     demonize();
+
+  db_open();
 
   int dev_cnt = 0;
   while((dev_cnt = scan_usb()) == 0)
@@ -276,5 +259,4 @@ int main(int argc, char *argv[])
     usb_close(g_devices[i].hdev);
   } 
   return 0;
-
 }
