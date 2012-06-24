@@ -4,6 +4,9 @@
 #include <usb.h>
 #include <pthread.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include "cm160.h"
 #include "usb_utils.h"
 #include "db.h"
@@ -27,7 +30,17 @@ static unsigned char history[HISTORY_SIZE][11];
 //struct usb_device *g_devices[MAX_DEVICES];
 struct cm160_device g_devices[MAX_DEVICES];
 
-/* prototype for thread routine */
+static void process_live_data(int y, int m, int d, int h, int min, double watts, double amps)
+{
+  FILE *fp =  fopen(".live", "w");
+  if(fp)
+  {
+    fprintf(fp, "%02d/%02d/%04d %02d:%02d : %.02f kW\n", d, m, y, h, min, watts);
+    fclose(fp);
+  }
+}
+
+// Insert history into DB worker thread
 void insert_db_history(void *data)
 {
   int i;
@@ -148,6 +161,8 @@ static int process_frame(int dev_id, unsigned char *frame)
         pthread_t thread;
         pthread_create(&thread, NULL, (void *)&insert_db_history, (void *)id);
       }
+      
+      process_live_data(year, month, day, hour, minutes, watts, amps); 
       printf("%02d/%02d/%04d %02d:%02d : %f kW %s\n", day, month, year, hour, minutes, watts,
         (frame[0]==FRAME_ID_LIVE)?" < LIVE":" < DB");
     }
@@ -235,12 +250,19 @@ static void demonize()
       fprintf(stderr, "can't start daemon\n");
       exit(EXIT_FAILURE);
   
-    case  0: // child: detach from tty
+    case  0: // child
+      // Change the file mode mask
+      umask(0);
+      // detach from tty
       if (setsid() == -1)
       {
         fprintf(stderr, "can't detach from tty\n");
         exit(EXIT_FAILURE);
       }
+      // Close out the standard file descriptors
+      close(STDIN_FILENO);
+      close(STDOUT_FILENO);
+      close(STDERR_FILENO);
       break;
     default: // parent: exit
       exit(EXIT_SUCCESS);
