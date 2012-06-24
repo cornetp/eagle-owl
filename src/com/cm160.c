@@ -32,6 +32,9 @@ void insert_db_history(void *data)
 {
   int i;
   int num_elems = (int)data;
+  // For an unknown reason, the cm160 sometimes sends a value > 12 for month
+  // -> in that case we use the last valid month received.
+  static int last_valid_month = 0; 
   printf("insert %d elems\n", num_elems);
   printf("insert into db...\n");
   for(i=0; i<num_elems; i++)
@@ -46,6 +49,12 @@ void insert_db_history(void *data)
     //float cost = (frame[6]+(frame[7]<<8))/100.0;
     float amps = (frame[8]+(frame[9]<<8))*0.07;
     float watts = amps * volts;
+
+    if(month < 0 || month > 12)
+      month = last_valid_month;
+    else
+      last_valid_month = month;
+
     db_insert_hist(year, month, day, hour, minutes, watts, amps);
     printf("\r %.1f%%", min(100, 100*((double)i/num_elems)));
     fflush(stdout);
@@ -61,6 +70,7 @@ static int process_frame(int dev_id, unsigned char *frame)
   int i;
   unsigned char data[1];
   unsigned int checksum = 0;
+  static int last_valid_month = 0; 
   usb_dev_handle *hdev = g_devices[dev_id].hdev;
   int epout = g_devices[dev_id].epout;
 
@@ -105,6 +115,11 @@ static int process_frame(int dev_id, unsigned char *frame)
     //float cost = (frame[6]+(frame[7]<<8))/100.0;
     float amps = (frame[8]+(frame[9]<<8))*0.07;
     float watts = amps * volts;
+
+    if(month < 0 || month > 12)
+      month = last_valid_month;
+    else
+      last_valid_month = month;
 
     if(frame[0]==FRAME_ID_DB)
     {
