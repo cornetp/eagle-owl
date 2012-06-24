@@ -18,31 +18,11 @@ static int create_main_db()
   printf("%s doesn't exist -> create it.\n", EAGLE_OWL_DB);
   sqlite3_open_v2(EAGLE_OWL_DB, &db, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
 
-  char *errmsg;
-  if((ret = sqlite3_exec(db, CREATE_HISTORY_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_history table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(db, CREATE_PARAM_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_param table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(db, CREATE_SENSOR_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_sensor table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(db, CREATE_TARIFFV2_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_tariffv2 table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
+  SQL_EXEC(db, CREATE_HISTORY_TBL, "Create energy_history table");
+  SQL_EXEC(db, CREATE_PARAM_TBL, "Create energy_param table");
+  SQL_EXEC(db, CREATE_SENSOR_TBL, "Create energy_sensor table");
+  SQL_EXEC(db, CREATE_TARIFFV2_TBL, "Create energy_tariffv2 table");
+
   return ret;
 }
 
@@ -52,31 +32,11 @@ static int create_stat_db()
   printf("%s doesn't exist -> create it.\n", EAGLE_OWL_STAT_DB);
   sqlite3_open_v2(EAGLE_OWL_STAT_DB, &stat_db, 
                   SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
-  char *errmsg;
-  if((ret = sqlite3_exec(stat_db, CREATE_YEAR_STAT, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_year_stat table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(stat_db, CREATE_MONTH_STAT, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_month_stat table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(stat_db, CREATE_DAY_STAT, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_day_stat table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(stat_db, CREATE_HOUR_STAT, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_hour_stat table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
+  SQL_EXEC(stat_db, CREATE_YEAR_STAT, "Create energy_year_stat table");
+  SQL_EXEC(stat_db, CREATE_MONTH_STAT, "Create energy_month_stat table");
+  SQL_EXEC(stat_db, CREATE_DAY_STAT, "Create energy_year_day table");
+  SQL_EXEC(stat_db, CREATE_HOUR_STAT, "Create energy_year_hour table");
+
   return ret;
 }
 
@@ -154,3 +114,4 @@ int db_insert_hist(int y, int m, int d, int h, int min, double watts, double amp
   //close_eagleowl_dbs(db, stat_db);
   return ret;
 }
+
