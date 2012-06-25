@@ -1,10 +1,3 @@
-<html>
-<head>
-  <title>Electricity live consumption</title>
-</head>
-
-<body>
-
 <?php
 $config = parse_ini_file('/etc/eagleowl.conf', true);
 $root_path = "";
@@ -13,6 +6,3 @@ if(isset($config['install_path']))
 $live_file = $root_path."/.live";
 echo file_get_contents($live_file);
 ?>
-
-</body>
-</html>
