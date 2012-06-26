@@ -32,10 +32,25 @@ struct cm160_device g_devices[MAX_DEVICES];
 
 static void process_live_data(int y, int m, int d, int h, int min, double watts, double amps)
 {
+  static double _watts = -1;
+  static double _amps = -1;
+  if(watts == -1 && amps == -1) // special case: update only the time
+  {
+    if(_watts == -1 && _amps == -1)
+      return;
+    watts = _watts;
+    amps = _amps;
+  }
+  else
+  {
+    _watts = watts;
+    _amps = amps;
+  }
+
   FILE *fp =  fopen(".live", "w");
   if(fp)
   {
-    fprintf(fp, "%02d/%02d/%04d %02d:%02d : %.02f kW\n", d, m, y, h, min, watts);
+    fprintf(fp, "%02d/%02d/%04d %02d:%02d - %.02f kW\n", d, m, y, h, min, watts);
     fclose(fp);
   }
 }
@@ -148,7 +163,11 @@ static int process_frame(int dev_id, unsigned char *frame)
         memcpy(history[id++], frame, 11);
       }
       else
+      {
         db_insert_hist(year, month, day, hour, minutes, watts, amps);
+        // update time
+        process_live_data(year, month, day, hour, minutes, -1, -1);
+      }
     }
     else
     {
