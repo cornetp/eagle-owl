@@ -79,6 +79,19 @@
             }
           }
 
+         $('.min').remove();
+         if(min>0)
+         {
+           var off = 3;
+           graph.append('<div class="min" style="position:absolute; right:10px; top:' + off + 'px;color:#88F;font-size:smaller">min:' + min + '</div>');
+         }
+         
+         $('.max').remove();
+         if(max>0 && max != min)
+         {
+           var off = 15;
+           graph.append('<div class="max" style="position:absolute; right:10px; top:' + off + 'px;color:#F88;font-size:smaller">max:' + max + '</div>');
+         }
           // update marks
           var num_marks = marks.length;
           for(var i = 0; i < num_marks; ++i)
@@ -130,19 +143,6 @@
           return ticks;
         }
 
-        // Add ticks with the min/max values
-        function yaxis_ticks()
-        {
-          var ticks = [];
-          if(min >= 0)
-            ticks.push([min, 'min: '+min]);
-          if(max >= 0 && max != min)
-            ticks.push([max, 'max: '+max]);
-
-//          alert('ticks');
-          return ticks;
-        }
-
         // setup control widget
         var updateInterval = 1; // in seconds
         var duration = (updateInterval*totalPoints)/60; // in minutes
@@ -165,12 +165,10 @@
         });
       
         // setup plot
-        var y1axis = { min: 0 };
-        var y2axis = { position: 'right', ticks: yaxis_ticks };
         var options = {
-            //series: { shadowSize: 0 }, // drawing is faster without shadows
+            series: { shadowSize: 0 }, // drawing is faster without shadows
             xaxis: { ticks: xaxis_ticks },
-            yaxes: [ y1axis, y2axis ],
+            yaxis: { min: 0 },
             grid: { markings: markings }
         };
         var plot = $.plot(graph, [ getData() ], options);
