@@ -94,6 +94,7 @@ function get_data($db, $year=0, $month=0, $day=0)
   $req.= ";";
 
 //  echo "<br/>$req<br/><br/>";
+  $db->busyTimeout (10000);
   $result = $db->query($req);
   $arr = array();
   while ($res = $result->fetchArray())
@@ -137,6 +138,7 @@ function get_stat_data($db, $year=0, $month=0, $day=0)
   $req.= ";";
 
 //  echo "<br/>$req<br/><br/>";
+  $db->busyTimeout (10000);
   $result = $db->query($req);
   $arr = array();
   while ($res = $result->fetchArray())
