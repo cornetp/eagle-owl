@@ -703,7 +703,8 @@ function data_info_cb(oData, aMainBox)
 
 	for (var i=0, c=nodes.length; i<c; i++) {
 		var d = nodes[i].childNodes[0].nodeValue;
-		has_data[parseInt(d)] = 1;
+		var s = nodes[i].getElementsByTagName('status')[0].childNodes[0].nodeValue;
+		has_data[parseInt(d)] = parseInt(s)+1; // 0: no data - 1: incomplete data - 2: data ok
 	}
 
 	for(i=0; i<days.length; i++)
@@ -711,15 +712,8 @@ function data_info_cb(oData, aMainBox)
 		if(!days[i].firstChild)
 			continue;
 		d = parseInt(days[i].firstChild.data);
-		if(has_data[d] == 1)
-                {
-			days[i].setAttribute("hasData", 1);
-		}
-		else
-		{
-			days[i].setAttribute("hasData", 0);
-			days[i].onmouseout();
-		}
+                days[i].setAttribute("hasData", has_data[d]);
+		days[i].onmouseout(); // update the color
 	}
 }
 
@@ -808,7 +802,9 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 
 		aDayDiv.onmouseover = function(){
 			var gRef = JsDatePick.getCalInstanceById(this.getAttribute("globalNumber")),currentColorScheme;
-			if (parseInt(this.getAttribute("hasData")) == 1)
+			if(parseInt(this.getAttribute("hasData")) == 1)
+				currentColorScheme = "orange";
+			else if(parseInt(this.getAttribute("hasData")) == 2)
 				currentColorScheme = gRef.getCurrentColorScheme();
 			else
 				currentColorScheme = "grey";
@@ -830,7 +826,9 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 		
 		aDayDiv.onmouseout = function(){
 			var gRef = JsDatePick.getCalInstanceById(this.getAttribute("globalNumber")),currentColorScheme;
-			if (parseInt(this.getAttribute("hasData")) == 1)
+			if(parseInt(this.getAttribute("hasData")) == 1)
+				currentColorScheme = "orange";
+			else if(parseInt(this.getAttribute("hasData")) == 2)
 				currentColorScheme = gRef.getCurrentColorScheme();
 			else
 				currentColorScheme = "grey";
@@ -852,7 +850,9 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 		
 		aDayDiv.onmousedown = function(){
 			var gRef = JsDatePick.getCalInstanceById(this.getAttribute("globalNumber")),currentColorScheme;
-			if (parseInt(this.getAttribute("hasData")) == 1)
+			if(parseInt(this.getAttribute("hasData")) == 1)
+				currentColorScheme = "orange";
+			else if(parseInt(this.getAttribute("hasData")) == 2)
 				currentColorScheme = gRef.getCurrentColorScheme();
 			else
 				currentColorScheme = "grey";
@@ -874,7 +874,9 @@ JsDatePick.prototype.populateMainBox = function(aMainBox){
 		
 		aDayDiv.onmouseup = function(){
 			var gRef = JsDatePick.getCalInstanceById(this.getAttribute("globalNumber")),currentColorScheme;
-			if (parseInt(this.getAttribute("hasData")) == 1)
+			if(parseInt(this.getAttribute("hasData")) == 1)
+				currentColorScheme = "orange";
+			else if(parseInt(this.getAttribute("hasData")) == 2)
 				currentColorScheme = gRef.getCurrentColorScheme();
 			else
 				currentColorScheme = "grey";
