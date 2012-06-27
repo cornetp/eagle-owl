@@ -1,6 +1,17 @@
 #ifndef __EAGLEOWL_SQL_H__
 #define __EAGLEOWL_SQL_H__
 
+#define SQL_EXEC(db,sql,desc)                                               \
+        {                                                                   \
+          int ret = SQLITE_OK;                                              \
+          char *err;                                                        \
+          if((ret = sqlite3_exec(db, sql, NULL, NULL, &err)) != SQLITE_OK)  \
+          {                                                                 \
+            printf("%s error: %s\n", desc, err);                            \
+            sqlite3_free(err);                                              \
+            return ret;                                                     \
+          }                                                                 \
+        }
 
 #define LIST_TABLES "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
 
@@ -57,15 +68,15 @@
 #define ATTACH_IMPORT_DB    "ATTACH DATABASE '%s' AS import_db"
 #define DETACH_IMPORT_DB    "DETACH import_db"
 
-#define MERGE_HISTORY_TBL "INSERT INTO energy_history " \
-                          "SELECT * from import_db.energy_history " \
-                          "WHERE NOT EXISTS ( " \
-                          " SELECT * from energy_history WHERE" \
-                          " import_db.energy_history.addr = energy_history.addr "\
-                          " AND import_db.energy_history.year = energy_history.year "\
+#define MERGE_HISTORY_TBL "INSERT INTO energy_history "                               \
+                          "SELECT * from import_db.energy_history "                   \
+                          "WHERE NOT EXISTS ( "                                       \
+                          " SELECT * from energy_history WHERE"                       \
+                          " import_db.energy_history.addr = energy_history.addr "     \
+                          " AND import_db.energy_history.year = energy_history.year " \
                           " AND import_db.energy_history.month = energy_history.month"\
-                          " AND import_db.energy_history.day = energy_history.day" \
-                          " AND import_db.energy_history.hour = energy_history.hour" \
+                          " AND import_db.energy_history.day = energy_history.day"    \
+                          " AND import_db.energy_history.hour = energy_history.hour"  \
                           " AND import_db.energy_history.min = energy_history.min)"
 
 #define MERGE_PARAM_TBL     "INSERT INTO energy_param "             \
@@ -103,20 +114,38 @@
                            " WHERE year = %d AND month = %d AND day = %d" \
                            " AND hour = %d"
 
-#define INSERT_STAT_YEAR   "INSERT INTO energy_year_stat "   \
+#define INSERT_STAT_YEAR   "INSERT OR IGNORE INTO energy_year_stat "     \
                            " VALUES (%d, %d, %f, %f, %f, %d)"
 
-#define INSERT_STAT_MONTH  "INSERT INTO energy_month_stat "   \
+#define INSERT_STAT_MONTH  "INSERT OR IGNORE INTO energy_month_stat "    \
                            " VALUES (%d, %d, %d, %f, %f, %f, %d)"
 
-#define INSERT_STAT_DAY    "INSERT INTO energy_day_stat "   \
+#define INSERT_STAT_DAY    "INSERT OR IGNORE INTO energy_day_stat "      \
                            " VALUES (%d, %d, %d, %d, %f, %f, %f, %d)"
 
-#define INSERT_STAT_HOUR   "INSERT INTO energy_hour_stat "   \
+#define INSERT_STAT_HOUR   "INSERT OR IGNORE INTO energy_hour_stat "      \
                            " VALUES (%d, %d, %d, %d, %d, %f, %f, %f, %d)"
 
 #define INSERT_HISTORY_TBL "INSERT OR IGNORE INTO energy_history " \
                            " VALUES (%d, %d, %d, %d, %d, %d," \
                            " %f, %f, %d, %d, %f, %f, %f, %f);"
+
+#define UPDATE_STAT_HOUR   "UPDATE energy_hour_stat "                       \
+                           " SET kwh_total = kwh_total + %f "               \
+                           " WHERE addr = %d AND year = %d AND month = %d"  \
+                           " AND day = %d and hour = %d"
+
+#define UPDATE_STAT_DAY    "UPDATE energy_day_stat "                        \
+                           " SET kwh_total = kwh_total + %f "               \
+                           " WHERE addr = %d AND year = %d AND month = %d"  \
+                           " AND day = %d"
+
+#define UPDATE_STAT_MONTH  "UPDATE energy_month_stat "                      \
+                           " SET kwh_total = kwh_total + %f "               \
+                           " WHERE addr = %d AND year = %d AND month = %d" 
+
+#define UPDATE_STAT_YEAR   "UPDATE energy_year_stat "                       \
+                           " SET kwh_total = kwh_total + %f "               \
+                           " WHERE addr = %d AND year = %d" 
 
 #endif//__EAGLEOWL_SQL_H__

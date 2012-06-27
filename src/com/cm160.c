@@ -65,6 +65,8 @@ void insert_db_history(void *data)
   static int last_valid_month = 0; 
   printf("insert %d elems\n", num_elems);
   printf("insert into db...\n");
+  clock_t cStartClock = clock();
+  db_begin_transaction();
   for(i=0; i<num_elems; i++)
   {
     unsigned char *frame = history[i];
@@ -77,18 +79,23 @@ void insert_db_history(void *data)
     //float cost = (frame[6]+(frame[7]<<8))/100.0;
     float amps = (frame[8]+(frame[9]<<8))*0.07;
     float watts = amps * volts;
+    double kwh = (watts/1000)/60;
+    double kah = (amps/1000)/60;
 
     if(month < 0 || month > 12)
       month = last_valid_month;
     else
       last_valid_month = month;
 
-    db_insert_hist(year, month, day, hour, minutes, watts, amps);
+    db_insert_hist(year, month, day, hour, minutes, kwh, kah);
     printf("\r %.1f%%", min(100, 100*((double)i/num_elems)));
     fflush(stdout);
   }
+  db_end_transaction();
   printf("\rinsert into db... 100%%\n");
   fflush(stdout);
+  printf("update db in %4.2f seconds\n", 
+         (clock() - cStartClock) / (double)CLOCKS_PER_SEC);
 }
 
 static int process_frame(int dev_id, unsigned char *frame)
@@ -143,6 +150,8 @@ static int process_frame(int dev_id, unsigned char *frame)
     //float cost = (frame[6]+(frame[7]<<8))/100.0;
     float amps = (frame[8]+(frame[9]<<8))*0.07;
     float watts = amps * volts;
+    double kwh = (watts/1000)/60;
+    double kah = (amps/1000)/60;
 
     if(month < 0 || month > 12)
       month = last_valid_month;
@@ -164,7 +173,7 @@ static int process_frame(int dev_id, unsigned char *frame)
       }
       else
       {
-        db_insert_hist(year, month, day, hour, minutes, watts, amps);
+        db_insert_hist(year, month, day, hour, minutes, kwh, kah);
         // update time
         process_live_data(year, month, day, hour, minutes, -1, -1);
       }
@@ -182,7 +191,7 @@ static int process_frame(int dev_id, unsigned char *frame)
       }
       
       process_live_data(year, month, day, hour, minutes, watts, amps); 
-      printf("%02d/%02d/%04d %02d:%02d : %f kW %s\n", day, month, year, hour, minutes, watts,
+      printf("%02d/%02d/%04d %02d:%02d : %f W %s\n", day, month, year, hour, minutes, watts,
         (frame[0]==FRAME_ID_LIVE)?" < LIVE":" < DB");
     }
   }
