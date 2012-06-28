@@ -79,18 +79,19 @@ void insert_db_history(void *data)
     //float cost = (frame[6]+(frame[7]<<8))/100.0;
     float amps = (frame[8]+(frame[9]<<8))*0.07;
     float watts = amps * volts;
-    double kwh = (watts/1000)/60;
-    double kah = (amps/1000)/60;
+    double wh = watts/60;
+    double ah = amps/60;
 
     if(month < 0 || month > 12)
       month = last_valid_month;
     else
       last_valid_month = month;
 
-    db_insert_hist(year, month, day, hour, minutes, kwh, kah);
+    db_insert_hist(year, month, day, hour, minutes, wh, ah);
     printf("\r %.1f%%", min(100, 100*((double)i/num_elems)));
     fflush(stdout);
   }
+  db_update_status();
   db_end_transaction();
   printf("\rinsert into db... 100%%\n");
   fflush(stdout);

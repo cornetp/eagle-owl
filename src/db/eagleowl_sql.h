@@ -41,6 +41,12 @@
                             " b6_time INT, b6_cost INT, b6_type INT," \
                             " PRIMARY KEY(name));"
 
+
+// record_count: number of minutes records that have been used to compute the stat
+// e.g: for a full day_stat: record_count should be 24*60 (24 hours of 60 minutes)
+// status: 0: the stat is complete (record_count is the max value)
+//         1: the stat is incomplete (record_count is lower than the max value)
+
 #define CREATE_YEAR_STAT    "CREATE TABLE energy_year_stat("              \
                             "addr INT, year INT, kwh_total INT,"          \
                             " kwh_week_total INT, kwh_weekend_total INT," \
@@ -53,16 +59,16 @@
                             " status INT,"                                 \
                             " PRIMARY KEY(addr, year, month));"
 
-#define CREATE_DAY_STAT     "CREATE TABLE energy_day_stat("                \
-                            "addr INT, year INT, month INT, day INT, "     \
-                            "kwh_total INT, kwh_week_total INT, "          \
-                            "kwh_weekend_total INT, status INT, "          \
+#define CREATE_DAY_STAT     "CREATE TABLE energy_day_stat("                         \
+                            "addr INT, year INT, month INT, day INT, "              \
+                            "kwh_total INT, kwh_week_total INT, "                   \
+                            "kwh_weekend_total INT, record_count INT, status INT, " \
                             " PRIMARY KEY(addr, year, month, day));"
 
-#define CREATE_HOUR_STAT    "CREATE TABLE energy_hour_stat("                     \
-                            "addr INT, year INT, month INT, day INT, hour INT, " \
-                            "kwh_total INT, kwh_week_total INT, "                \
-                            "kwh_weekend_total INT, status INT, "                \
+#define CREATE_HOUR_STAT    "CREATE TABLE energy_hour_stat("                        \
+                            "addr INT, year INT, month INT, day INT, hour INT, "    \
+                            "kwh_total INT, kwh_week_total INT, "                   \
+                            "kwh_weekend_total INT, record_count INT, status INT, " \
                             " PRIMARY KEY(addr, year, month, day, hour));"
 
 #define ATTACH_IMPORT_DB    "ATTACH DATABASE '%s' AS import_db"
@@ -120,32 +126,42 @@
 #define INSERT_STAT_MONTH  "INSERT OR IGNORE INTO energy_month_stat "    \
                            " VALUES (%d, %d, %d, %f, %f, %f, %d)"
 
-#define INSERT_STAT_DAY    "INSERT OR IGNORE INTO energy_day_stat "      \
-                           " VALUES (%d, %d, %d, %d, %f, %f, %f, %d)"
+#define INSERT_STAT_DAY    "INSERT OR IGNORE INTO energy_day_stat "       \
+                           " VALUES (%d, %d, %d, %d, %f, %f, %f, %d, %d)"
 
-#define INSERT_STAT_HOUR   "INSERT OR IGNORE INTO energy_hour_stat "      \
-                           " VALUES (%d, %d, %d, %d, %d, %f, %f, %f, %d)"
+#define INSERT_STAT_HOUR   "INSERT OR IGNORE INTO energy_hour_stat "         \
+                           " VALUES (%d, %d, %d, %d, %d, %f, %f, %f, %d, %d)"
 
 #define INSERT_HISTORY_TBL "INSERT OR IGNORE INTO energy_history " \
                            " VALUES (%d, %d, %d, %d, %d, %d," \
                            " %f, %f, %d, %d, %f, %f, %f, %f);"
 
-#define UPDATE_STAT_HOUR   "UPDATE energy_hour_stat "                       \
-                           " SET kwh_total = kwh_total + %f "               \
-                           " WHERE addr = %d AND year = %d AND month = %d"  \
+#define UPDATE_STAT_HOUR   "UPDATE energy_hour_stat "                         \
+                           " SET kwh_total = kwh_total + %f, "                \
+                           " kwh_week_total = kwh_week_total + %f, "          \
+                           " kwh_weekend_total = kwh_weekend_total + %f, "    \
+                           " record_count = record_count + 1 "                \
+                           " WHERE addr = %d AND year = %d AND month = %d"    \
                            " AND day = %d and hour = %d"
 
-#define UPDATE_STAT_DAY    "UPDATE energy_day_stat "                        \
-                           " SET kwh_total = kwh_total + %f "               \
-                           " WHERE addr = %d AND year = %d AND month = %d"  \
+#define UPDATE_STAT_DAY    "UPDATE energy_day_stat "                          \
+                           " SET kwh_total = kwh_total + %f, "                \
+                           " kwh_week_total = kwh_week_total + %f, "          \
+                           " kwh_weekend_total = kwh_weekend_total + %f, "    \
+                           " record_count = record_count + 1 "                \
+                           " WHERE addr = %d AND year = %d AND month = %d"    \
                            " AND day = %d"
 
-#define UPDATE_STAT_MONTH  "UPDATE energy_month_stat "                      \
-                           " SET kwh_total = kwh_total + %f "               \
+#define UPDATE_STAT_MONTH  "UPDATE energy_month_stat "                        \
+                           " SET kwh_total = kwh_total + %f, "                \
+                           " kwh_week_total = kwh_week_total + %f, "          \
+                           " kwh_weekend_total = kwh_weekend_total + %f "     \
                            " WHERE addr = %d AND year = %d AND month = %d" 
 
-#define UPDATE_STAT_YEAR   "UPDATE energy_year_stat "                       \
-                           " SET kwh_total = kwh_total + %f "               \
+#define UPDATE_STAT_YEAR   "UPDATE energy_year_stat "                         \
+                           " SET kwh_total = kwh_total + %f, "                \
+                           " kwh_week_total = kwh_week_total + %f, "          \
+                           " kwh_weekend_total = kwh_weekend_total + %f "     \
                            " WHERE addr = %d AND year = %d" 
 
 #endif//__EAGLEOWL_SQL_H__
