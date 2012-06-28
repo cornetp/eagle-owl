@@ -135,6 +135,7 @@ function get_stat_data($db, $year=0, $month=0, $day=0)
     if($month) $req.= "AND month = \"$month\" ";
     if($day)   $req.= "AND day = \"$day\" ";
   }
+  $req.= "ORDER BY $unit";
   $req.= ";";
 
 //  echo "<br/>$req<br/><br/>";
