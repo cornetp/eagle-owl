@@ -37,6 +37,7 @@ if ($year && $month)
   
   $db = new SQLite3($stat_db);
   $req = "SELECT day, status FROM energy_day_stat WHERE year = $year and month = $month;";
+  $db->busyTimeout (10000);
   $result = $db->query($req);
   while ($res = $result->fetchArray())
   {
