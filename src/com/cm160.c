@@ -11,48 +11,55 @@
 #include "usb_utils.h"
 #include "db.h"
 
-#ifndef min
-  #define min(a,b) (((a) < (b)) ? (a) : (b))
-#endif
-#ifndef max
-  #define max(a,b) (((a) > (b)) ? (a) : (b))
-#endif
+static char ID_MSG[11] = { 
+      0xA9, 0x49, 0x44, 0x54, 0x43, 0x4D, 0x56, 0x30, 0x30, 0x31, 0x01 };
+static char WAIT_MSG[11] = { 
+      0xA9, 0x49, 0x44, 0x54, 0x57, 0x41, 0x49, 0x54, 0x50, 0x43, 0x52 };
 
-static char ID_MSG[11]   = { 0xA9, 0x49, 0x44, 0x54, 0x43, 0x4D, 0x56, 0x30, 0x30, 0x31, 0x01 };
-static char WAIT_MSG[11] = { 0xA9, 0x49, 0x44, 0x54, 0x57, 0x41, 0x49, 0x54, 0x50, 0x43, 0x52 };
-
-#define FRAME_ID_LIVE 0x51 
-#define FRAME_ID_DB   0x59 // value used to store in the DB (ch1_kw_avg)
 
 #define HISTORY_SIZE 65536 // 30 * 24 * 60 = 43200 theoric history size
+
+struct cm160_device g_devices[MAX_DEVICES];
 static unsigned char history[HISTORY_SIZE][11];
 
-//struct usb_device *g_devices[MAX_DEVICES];
-struct cm160_device g_devices[MAX_DEVICES];
-
-static void process_live_data(int y, int m, int d, int h, int min, double watts, double amps)
+static void process_live_data(struct record_data *rec) 
 {
   static double _watts = -1;
-  static double _amps = -1;
-  if(watts == -1 && amps == -1) // special case: update only the time
+  double w = rec->watts;
+
+  if(!rec->isLiveData) // special case: update only the time
   {
-    if(_watts == -1 && _amps == -1)
+    if(_watts == -1)
       return;
-    watts = _watts;
-    amps = _amps;
+    w = _watts;
   }
   else
-  {
-    _watts = watts;
-    _amps = amps;
-  }
+    _watts = w;
 
   FILE *fp =  fopen(".live", "w");
   if(fp)
   {
-    fprintf(fp, "%02d/%02d/%04d %02d:%02d - %.02f kW\n", d, m, y, h, min, watts);
+    fprintf(fp, "%02d/%02d/%04d %02d:%02d - %.02f kW\n", 
+            rec->day, rec->month, rec->year, rec->hour, rec->min, w);
     fclose(fp);
   }
+}
+
+static void decode_frame(unsigned char *frame, struct record_data *rec)
+{
+  int volt = 230; // TODO: use the value from energy_param table (supply_voltage)
+  rec->addr = 0; // TODO: don't use an harcoded addr value for the device...
+  rec->year = frame[1]+2000;
+  rec->month = frame[2];
+  rec->day = frame[3];
+  rec->hour = frame[4];
+  rec->min = frame[5];
+  rec->cost = (frame[6]+(frame[7]<<8))/100.0;
+  rec->amps = (frame[8]+(frame[9]<<8))*0.07; // mean intensity during one minute
+  rec->watts = rec->amps * volt; // mean power during one minute
+  rec->ah = rec->amps/60; // -> we must devide by 60 to convert into ah and wh
+  rec->wh = rec->watts/60;
+  rec->isLiveData = (frame[0] == FRAME_ID_LIVE)? true:false;
 }
 
 // Insert history into DB worker thread
@@ -66,33 +73,26 @@ void insert_db_history(void *data)
   printf("insert %d elems\n", num_elems);
   printf("insert into db...\n");
   clock_t cStartClock = clock();
+
   db_begin_transaction();
   for(i=0; i<num_elems; i++)
   {
     unsigned char *frame = history[i];
-    int volts = 230;
-    int year = frame[1]+2000;
-    int month = frame[2];
-    int day = frame[3];
-    int hour = frame[4];
-    int minutes = frame[5];
-    //float cost = (frame[6]+(frame[7]<<8))/100.0;
-    float amps = (frame[8]+(frame[9]<<8))*0.07;
-    float watts = amps * volts;
-    double wh = watts/60;
-    double ah = amps/60;
+    struct record_data rec;
+    decode_frame(frame, &rec);
 
-    if(month < 0 || month > 12)
-      month = last_valid_month;
+    if(rec.month < 0 || rec.month > 12)
+      rec.month = last_valid_month;
     else
-      last_valid_month = month;
+      last_valid_month = rec.month;
 
-    db_insert_hist(year, month, day, hour, minutes, wh, ah);
+    db_insert_hist(&rec);
     printf("\r %.1f%%", min(100, 100*((double)i/num_elems)));
     fflush(stdout);
   }
   db_update_status();
   db_end_transaction();
+
   printf("\rinsert into db... 100%%\n");
   fflush(stdout);
   printf("update db in %4.2f seconds\n", 
@@ -138,26 +138,18 @@ static int process_frame(int dev_id, unsigned char *frame)
     checksum &= 0xff;
     if(checksum != frame[10])
     {
-      printf("data error: invalid checksum: expected 0x%x, got 0x%x\n", frame[10], checksum);
+      printf("data error: invalid checksum: expected 0x%x, got 0x%x\n", 
+             frame[10], checksum);
       return -1;
     }
 
-    int volts = 230;
-    int year = frame[1]+2000;
-    int month = frame[2];
-    int day = frame[3];
-    int hour = frame[4];
-    int minutes = frame[5];
-    //float cost = (frame[6]+(frame[7]<<8))/100.0;
-    float amps = (frame[8]+(frame[9]<<8))*0.07;
-    float watts = amps * volts;
-    double kwh = (watts/1000)/60;
-    double kah = (amps/1000)/60;
+    struct record_data rec;
+    decode_frame(frame, &rec);
 
-    if(month < 0 || month > 12)
-      month = last_valid_month;
+    if(rec.month < 0 || rec.month > 12)
+      rec.month = last_valid_month;
     else
-      last_valid_month = month;
+      last_valid_month = rec.month;
 
     if(frame[0]==FRAME_ID_DB)
     {
@@ -166,40 +158,45 @@ static int process_frame(int dev_id, unsigned char *frame)
         if(id == 0)
           printf("downloading history...\n");
         else if(id%10 == 0)
-        {
-          printf("\r %.1f%%", min(100, 100*((double)id/(30*24*60))));
+        { // print progression status
+          // rough estimation : we should received a month of history
+          // -> 31x24x60 minute records
+          printf("\r %.1f%%", min(100, 100*((double)id/(31*24*60))));
           fflush(stdout);
         }
+        // cache the history in a buffer, we will insert it in the db later.
         memcpy(history[id++], frame, 11);
       }
       else
       {
-        db_insert_hist(year, month, day, hour, minutes, kwh, kah);
-        // update time
-        process_live_data(year, month, day, hour, minutes, -1, -1);
+        db_insert_hist(&rec);
+        process_live_data(&rec); // the record is not live data, but we do that to
+                                 // update the time in the .live file
+                                 // (the cm160 send a DB frame when a new minute starts)
       }
     }
     else
     {
       if(receive_history)
-      {
+      { // When we receive the first live data, 
+        // we know that the history is totally downloaded
         printf("\rdownloading history... 100%%\n");
         fflush(stdout);
         receive_history = false;
-        // insert the history into the db
+        // Now, insert the history into the db
         pthread_t thread;
         pthread_create(&thread, NULL, (void *)&insert_db_history, (void *)id);
       }
       
-      process_live_data(year, month, day, hour, minutes, watts, amps); 
-      printf("%02d/%02d/%04d %02d:%02d : %f W %s\n", day, month, year, hour, minutes, watts,
-        (frame[0]==FRAME_ID_LIVE)?" < LIVE":" < DB");
+      process_live_data(&rec);
+      printf("LIVE: %02d/%02d/%04d %02d:%02d : %f W\n",
+             rec.day, rec.month, rec.year, rec.hour, rec.min, rec.watts);
     }
   }
   return 0;
 }
 
-static int io_thread(int dev_id)
+static int io_loop(int dev_id)
 {
   int ret;
   usb_dev_handle *hdev = g_devices[dev_id].hdev;
@@ -227,7 +224,7 @@ static int io_thread(int dev_id)
       memcpy(word, bufptr, 11);
       bufptr+=11;
       process_frame(dev_id, word);
-    };
+    }
   }
   return 0;
 }
@@ -246,14 +243,11 @@ static int handle_device(int dev_id)
     return -1;
   }
 
-
   if((r = usb_claim_interface(hdev, 0)) < 0)
   {
     printf("Interface cannot be claimed: %d\n", r);
     return r;
   }
-
-//  print_dev_infos(dev, hdev);
 
   int nep = dev->config->interface->altsetting->bNumEndpoints;
   for(i=0; i<nep; i++)
@@ -265,7 +259,8 @@ static int handle_device(int dev_id)
       g_devices[dev_id].epout = ep;
   }
 
-  io_thread(dev_id);
+  // read/write main loop
+  io_loop(dev_id);
  
   usb_release_interface(hdev, 0);
   return 0;
@@ -298,7 +293,6 @@ static void demonize()
   }
 }
 
-
 int main(int argc, char *argv[])
 {
   int i;
@@ -326,3 +320,4 @@ int main(int argc, char *argv[])
   } 
   return 0;
 }
+

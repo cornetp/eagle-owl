@@ -7,24 +7,14 @@
 
 extern struct cm160_device g_devices[MAX_DEVICES];
 
-static void print_dev_infos(struct usb_device *dev, usb_dev_handle *hdev)
-{
-  char string[50];
-  usb_get_string_simple(hdev, dev->descriptor.iManufacturer, string, sizeof(string));
-  printf("Device Manfucaturer : %s\n", string);
-  usb_get_string_simple(hdev, dev->descriptor.iProduct, string, sizeof(string));
-  printf("Product Name : %s\n", string);
-  usb_get_string_simple(hdev, dev->descriptor.iSerialNumber, string, sizeof(string));
-  printf("Device Serial Number: %s\n", string);
-}
-
 static int scan_device(struct usb_device *dev, int *dev_cnt)
 {
-//  printf("found device %04x:%04x\n", dev->descriptor.idVendor, dev->descriptor.idProduct);
-  if(dev->descriptor.idVendor == OWL_VENDOR_ID && dev->descriptor.idProduct == CM160_DEV_ID)
+  if(dev->descriptor.idVendor == OWL_VENDOR_ID && 
+     dev->descriptor.idProduct == CM160_DEV_ID)
   {
     printf("Found compatible device #%d: %04x:%04x (%s)\n",
-           *dev_cnt, dev->descriptor.idVendor, dev->descriptor.idProduct, dev->filename);
+           *dev_cnt, dev->descriptor.idVendor, 
+           dev->descriptor.idProduct, dev->filename);
     g_devices[*dev_cnt].usb_dev = dev;
     (*dev_cnt)++;
   }

@@ -10,5 +10,17 @@ struct cm160_device {
   int epout; // OUT end point address
 };
 
+// CM160 protocol
+#define FRAME_ID_LIVE 0x51 
+#define FRAME_ID_DB   0x59 // value used to store in the DB (ch1_kw_avg)
+
+// min/max macros
+#ifndef min
+  #define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+#ifndef max
+  #define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
 #endif // __CM160_H__
 

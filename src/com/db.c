@@ -11,6 +11,7 @@
 static sqlite3 *db = NULL;
 static sqlite3 *stat_db = NULL;
 
+// Returns the day of the week: 0 = monday ... 6 = sunday
 static inline int get_day_of_week(int y, int m, int d)
 {
   static int t[] = {0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4};
@@ -52,20 +53,6 @@ static int create_stat_db()
   return ret;
 }
 
-void db_close()
-{
-  if(db)
-  {
-    sqlite3_close(db);
-    db = NULL;
-  }
-  if(stat_db)
-  {
-    sqlite3_close(stat_db);
-    stat_db = NULL;
-  }
-}
-
 int db_open(void)
 {
   int ret = SQLITE_OK;
@@ -85,6 +72,20 @@ int db_open(void)
   return ret;
 }
 
+void db_close()
+{
+  if(db)
+  {
+    sqlite3_close(db);
+    db = NULL;
+  }
+  if(stat_db)
+  {
+    sqlite3_close(stat_db);
+    stat_db = NULL;
+  }
+}
+
 int db_begin_transaction()
 {
   SQL_EXEC(db, "BEGIN TRANSACTION", "begin transaction");
@@ -98,7 +99,8 @@ int db_end_transaction()
   return 0;
 }
 
-int db_insert_hist(int y, int m, int d, int h, int min, double wh, double ah)
+//int db_insert_hist(int y, int m, int d, int h, int min, double wh, double ah)
+int db_insert_hist(struct record_data *rec)
 {
   int ret = SQLITE_OK;
   char *errmsg;
@@ -115,9 +117,16 @@ int db_insert_hist(int y, int m, int d, int h, int min, double wh, double ah)
   }
 
   char sql[512];
-  int addr = 0;
+  int addr = rec->addr;
   int ghg = 43; // TODO: get it from energy_param table
-  int cost = 2466; // TODO: get it from energy_tariffv2
+  int cost = rec->cost;
+  int y = rec->year;
+  int m = rec->month;
+  int d = rec->day;
+  int h = rec->hour;
+  int min = rec->min;
+  double ah = rec->ah;
+  double wh = rec->wh;
   sprintf(sql, INSERT_HISTORY_TBL, addr, y, m, d, h, min, ah, wh, ghg, cost,
                                    ah, ah, wh, wh);
   do
@@ -151,21 +160,20 @@ int db_insert_hist(int y, int m, int d, int h, int min, double wh, double ah)
 
 int update_stat_db(int y, int m, int d, int h, double kwh)
 {
-  static sqlite3_int64 prev_insert = 0;
-  sqlite3_int64 last_insert = 0;
-
+  static sqlite3_int64 prev_insert = 0; // Used to know if the record was
+  sqlite3_int64 last_insert = 0;        // already in the db or not
+  int addr = 0; // TODO
+  char sql[512];
+  double day_conso = 0;
+  double night_conso = 0;
+  
   if(!db || !stat_db)
   {
     fprintf(stderr, "Error: db_insert_hist dbs not opened!\n");
     return -1;
   }
 
-  int addr = 0;
-  char sql[512];
-
-  double day_conso = 0;
-  double night_conso = 0;
-  if(get_day_of_week(y, m, d) < 5 && is_full_tariff(h))
+  if(get_day_of_week(y, m, d) < 5 && is_full_tariff(h)) // TODO: use tariffs from db
     day_conso += kwh;
   else
     night_conso += kwh;
@@ -217,7 +225,12 @@ int update_stat_db(int y, int m, int d, int h, double kwh)
   return SQLITE_OK;
 }
 
-int db_update_status()
+// status is use to visualize in the calendar if the data for a day is complete
+// or partial with the following color code:
+// grey   : no data for that day
+// orange : data, but incomplete
+// blue   : data is complete (sum of 60x24 minutes kwh values)
+int db_update_status(void)
 {
   char sql[512];
   if(!stat_db)
@@ -232,6 +245,7 @@ int db_update_status()
 
   sprintf(sql, "UPDATE energy_day_stat SET status = 1 WHERE record_count = %d", 60*24);
   SQL_EXEC(stat_db, sql, "Update energy_day_stat status");
+
   return SQLITE_OK;
 }
 
