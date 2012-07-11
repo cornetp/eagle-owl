@@ -58,13 +58,13 @@
 #define CREATE_YEAR_STAT    "CREATE TABLE energy_year_stat("              \
                             "addr INT, year INT, kwh_total INT,"          \
                             " kwh_week_total INT, kwh_weekend_total INT," \
-                            " status INT,"                                \
+                            " record_count INT, status INT,"              \
                             " PRIMARY KEY(addr, year));"
 
 #define CREATE_MONTH_STAT   "CREATE TABLE energy_month_stat("              \
                             "addr INT, year INT, month INT, kwh_total INT,"\
                             " kwh_week_total INT, kwh_weekend_total INT,"  \
-                            " status INT,"                                 \
+                            " record_count INT, status INT,"               \
                             " PRIMARY KEY(addr, year, month));"
 
 #define CREATE_DAY_STAT     "CREATE TABLE energy_day_stat("                         \
@@ -128,48 +128,48 @@
                            " WHERE year = %d AND month = %d AND day = %d" \
                            " AND hour = %d"
 
-#define INSERT_STAT_YEAR   "INSERT OR IGNORE INTO energy_year_stat "     \
-                           " VALUES (%d, %d, %f, %f, %f, %d)"
-
-#define INSERT_STAT_MONTH  "INSERT OR IGNORE INTO energy_month_stat "    \
-                           " VALUES (%d, %d, %d, %f, %f, %f, %d)"
-
-#define INSERT_STAT_DAY    "INSERT OR IGNORE INTO energy_day_stat "       \
-                           " VALUES (%d, %d, %d, %d, %f, %f, %f, %d, %d)"
-
-#define INSERT_STAT_HOUR   "INSERT OR IGNORE INTO energy_hour_stat "         \
-                           " VALUES (%d, %d, %d, %d, %d, %f, %f, %f, %d, %d)"
-
 #define INSERT_HISTORY_TBL "INSERT OR IGNORE INTO energy_history " \
                            " VALUES (%d, %d, %d, %d, %d, %d," \
                            " %f, %f, %d, %d, %f, %f, %f, %f);"
 
-#define UPDATE_STAT_HOUR   "UPDATE energy_hour_stat "                         \
-                           " SET kwh_total = kwh_total + %f, "                \
-                           " kwh_week_total = kwh_week_total + %f, "          \
-                           " kwh_weekend_total = kwh_weekend_total + %f, "    \
-                           " record_count = record_count + 1 "                \
-                           " WHERE addr = %d AND year = %d AND month = %d"    \
-                           " AND day = %d and hour = %d"
+#define UPDATE_STAT_HOUR   "INSERT OR REPLACE INTO energy_hour_stat"               \
+                           " SELECT addr, year, month, day, hour, kwh_total + %f," \
+                           "  kwh_week_total + %f, kwh_weekend_total + %f,"        \
+                           "  record_count + 1 AS c, status FROM energy_hour_stat" \
+                           "  WHERE year=%d AND month=%d AND day=%d AND hour=%d"   \
+                           " UNION "                                               \
+                           " SELECT %d, %d, %d, %d, %d, %f, %f, %f, 1 as r, 0"     \
+                           " ORDER BY r DESC"                                      \
+                           " LIMIT 1;"
 
-#define UPDATE_STAT_DAY    "UPDATE energy_day_stat "                          \
-                           " SET kwh_total = kwh_total + %f, "                \
-                           " kwh_week_total = kwh_week_total + %f, "          \
-                           " kwh_weekend_total = kwh_weekend_total + %f, "    \
-                           " record_count = record_count + 1 "                \
-                           " WHERE addr = %d AND year = %d AND month = %d"    \
-                           " AND day = %d"
+#define UPDATE_STAT_DAY    "INSERT OR REPLACE INTO energy_day_stat"                \
+                           " SELECT addr, year, month, day, kwh_total + %f,"       \
+                           "  kwh_week_total + %f, kwh_weekend_total + %f,"        \
+                           "  record_count + 1 AS c, status FROM energy_day_stat"  \
+                           "  WHERE year = %d AND month = %d AND day = %d"         \
+                           " UNION "                                               \
+                           " SELECT %d, %d, %d, %d, %f, %f, %f, 1 as r, 0"         \
+                           " ORDER BY r DESC"                                      \
+                           " LIMIT 1;"
 
-#define UPDATE_STAT_MONTH  "UPDATE energy_month_stat "                        \
-                           " SET kwh_total = kwh_total + %f, "                \
-                           " kwh_week_total = kwh_week_total + %f, "          \
-                           " kwh_weekend_total = kwh_weekend_total + %f "     \
-                           " WHERE addr = %d AND year = %d AND month = %d" 
+#define UPDATE_STAT_MONTH  "INSERT OR REPLACE INTO energy_month_stat"              \
+                           " SELECT addr, year, month, kwh_total + %f,"            \
+                           "  kwh_week_total + %f, kwh_weekend_total + %f,"        \
+                           "  record_count + 1 AS c, status FROM energy_month_stat"\
+                           "  WHERE year = %d AND month = %d"                      \
+                           " UNION "                                               \
+                           " SELECT %d, %d, %d, %f, %f, %f, 1 as r, 0"             \
+                           " ORDER BY r DESC"                                      \
+                           " LIMIT 1;"
 
-#define UPDATE_STAT_YEAR   "UPDATE energy_year_stat "                         \
-                           " SET kwh_total = kwh_total + %f, "                \
-                           " kwh_week_total = kwh_week_total + %f, "          \
-                           " kwh_weekend_total = kwh_weekend_total + %f "     \
-                           " WHERE addr = %d AND year = %d" 
+#define UPDATE_STAT_YEAR   "INSERT OR REPLACE INTO energy_year_stat"               \
+                           " SELECT addr, year, kwh_total + %f,"                   \
+                           "  kwh_week_total + %f, kwh_weekend_total + %f,"        \
+                           "  record_count + 1 AS c, status FROM energy_year_stat" \
+                           "  WHERE year = %d"                                     \
+                           " UNION "                                               \
+                           " SELECT %d, %d, %f, %f, %f, 1 as r, 0"                 \
+                           " ORDER BY r DESC"                                      \
+                           " LIMIT 1;"
 
 #endif//__EAGLEOWL_SQL_H__
