@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <string.h>
 #include <sqlite3.h>
 
@@ -12,7 +13,17 @@
   #define dbg_print(...)
 #endif
 
+#ifndef min
+  #define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
+#ifndef max
+  #define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
 #define OWL_DB_TABLES_CNT 4
+
+int update_stat_db(int y, int m, int d, int h, int min, double kwh, double kah);
+
 static char *owl_db_tables[OWL_DB_TABLES_CNT] = {
   "energy_history",
   "energy_param",
@@ -23,6 +34,9 @@ static char *owl_db_tables[OWL_DB_TABLES_CNT] = {
 
 #define EAGLE_OWL_DB 		"eagleowl.db"
 #define EAGLE_OWL_STAT_DB 	"eagleowl_stat.db"
+
+static sqlite3 *db = NULL;
+static sqlite3 *stat_db = NULL;
 
 static inline int get_day_of_week(int y, int m, int d)
 {
@@ -52,25 +66,17 @@ static bool is_present(char *name, char table[][256], int size)
   return false;
 }
 
-static bool validate_imported_db(sqlite3* db)
+static bool validate_imported_db(sqlite3* imp_db)
 {
   // list tables
 //  char *errmsg;
   char sql[] = LIST_TABLES;
-/*
-  int ret = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
-  if(ret != SQLITE_OK)
-  {
-    printf("validate_imported_db error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }*/
 
   sqlite3_stmt *stmt;
-  int ret = sqlite3_prepare(db, sql, sizeof(sql), &stmt, NULL);
+  int ret = sqlite3_prepare(imp_db, sql, sizeof(sql), &stmt, NULL);
   if(ret != SQLITE_OK)
   {
-    printf("sqlite3_prepare error: %s\n", sqlite3_errmsg(db));
+    printf("sqlite3_prepare error: %s\n", sqlite3_errmsg(imp_db));
     return false;
   }
 
@@ -103,251 +109,225 @@ static bool validate_imported_db(sqlite3* db)
 }
 
 // Create eagleowl_db (same format as the one from OWL)
-static int create_main_db(sqlite3 **db)
+static int create_main_db()
 {
   int ret = SQLITE_OK;
   printf("%s doesn't exist -> create it.\n", EAGLE_OWL_DB);
-  sqlite3_open_v2(EAGLE_OWL_DB, db, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
+  sqlite3_open_v2(EAGLE_OWL_DB, &db, SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
 
-  char *errmsg;
-  if((ret = sqlite3_exec(*db, CREATE_HISTORY_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_history table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(*db, CREATE_PARAM_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_param table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(*db, CREATE_SENSOR_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_sensor table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(*db, CREATE_TARIFFV2_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("Create energy_tariffv2 table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
+  SQL_EXEC(db, CREATE_HISTORY_TBL, "Create energy_history table");
+  SQL_EXEC(db, CREATE_PARAM_TBL, "Create energy_param table");
+  SQL_EXEC(db, CREATE_SENSOR_TBL, "Create energy_sensor table");
+  SQL_EXEC(db, CREATE_TARIFFV2_TBL, "Create energy_tariffv2 table");
+
   return ret;
 }
 
-static int create_stat_db(sqlite3 **db)
+static int create_stat_db()
 {
   int ret = SQLITE_OK;
   printf("%s doesn't exist -> create it.\n", EAGLE_OWL_STAT_DB);
-  sqlite3_open_v2(EAGLE_OWL_STAT_DB, db, 
+  sqlite3_open_v2(EAGLE_OWL_STAT_DB, &stat_db, 
                   SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE, NULL);
-  char *errmsg;
-  if((ret = sqlite3_exec(*db, CREATE_YEAR_STAT, NULL, NULL, &errmsg)) != SQLITE_OK)
+  SQL_EXEC(stat_db, CREATE_YEAR_STAT, "Create energy_year_stat table");
+  SQL_EXEC(stat_db, CREATE_MONTH_STAT, "Create energy_month_stat table");
+  SQL_EXEC(stat_db, CREATE_DAY_STAT, "Create energy_year_day table");
+  SQL_EXEC(stat_db, CREATE_HOUR_STAT, "Create energy_year_hour table");
+
+  return ret;
+}
+
+void db_close()
+{
+  if(db)
   {
-    printf("Create energy_year_stat table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
+    sqlite3_close(db);
+    db = NULL;
   }
-  if((ret = sqlite3_exec(*db, CREATE_MONTH_STAT, NULL, NULL, &errmsg)) != SQLITE_OK)
+  if(stat_db)
   {
-    printf("Create energy_month_stat table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
+    sqlite3_close(stat_db);
+    stat_db = NULL;
   }
-  if((ret = sqlite3_exec(*db, CREATE_DAY_STAT, NULL, NULL, &errmsg)) != SQLITE_OK)
+}
+
+int db_open(void)
+{
+  int ret = SQLITE_OK;
+  if(!db)
   {
-    printf("Create energy_day_stat table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
+    ret = sqlite3_open_v2(EAGLE_OWL_DB, &db, SQLITE_OPEN_READWRITE, NULL);
+    if(ret != SQLITE_OK)
+      ret = create_main_db();
   }
-  if((ret = sqlite3_exec(*db, CREATE_HOUR_STAT, NULL, NULL, &errmsg)) != SQLITE_OK)
+  
+  if(!stat_db && ret == SQLITE_OK)
   {
-    printf("Create energy_hour_stat table error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
+    ret = sqlite3_open_v2(EAGLE_OWL_STAT_DB, &stat_db, SQLITE_OPEN_READWRITE, NULL);
+    if(ret != SQLITE_OK)
+      ret = create_stat_db();
   }
   return ret;
 }
 
-static int merge_main_db(sqlite3 **db, char *import_db_name)
+int db_begin_transaction(void)
+{
+  SQL_EXEC(db, "BEGIN TRANSACTION", "begin transaction");
+  SQL_EXEC(stat_db, "BEGIN TRANSACTION", "begin transaction");
+  return SQLITE_OK;
+}
+
+int db_end_transaction(void)
+{
+  SQL_EXEC(db, "END TRANSACTION", "end transaction");
+  SQL_EXEC(stat_db, "END TRANSACTION", "end transaction");
+  return SQLITE_OK;
+}
+
+int db_insert_hist(int y, int m, int d, int h, int min, double wh, double ah)
 {
   int ret = SQLITE_OK;
   char *errmsg;
+  bool retry = false;
+  static sqlite3_int64 prev_insert = 0;
+  sqlite3_int64 last_insert = 0;
 
-  char sql[512];
-  sprintf(sql, ATTACH_IMPORT_DB, import_db_name);
-  if((ret = sqlite3_exec(*db, sql, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("attach database error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(*db, MERGE_HISTORY_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("merge energy_history error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(*db, MERGE_PARAM_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("merge energy_param error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(*db, MERGE_SENSOR_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("merge energy_sensor error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(*db, MERGE_TARIFFV2_TBL, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("merge energy_tariffv2 error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
-  if((ret = sqlite3_exec(*db, DETACH_IMPORT_DB, NULL, NULL, &errmsg)) != SQLITE_OK)
-  {
-    printf("detach error: %s\n", errmsg);
-    sqlite3_free(errmsg);
-    return ret;
-  }
+  db_open();
 
-  return ret;
-}
-/*
-#define TOTO   "INSERT OR IGNORE INTO energy_year_stat " \
-               " VALUES (%s, %s, %s, 0, 0, 0); "\
-               " UPDATE energy_year_stat  "\
-               " SET kwh_total = kwh_total + %s " \
-               " WHERE addr = %s and year = %s"
-int update_stat_cb(void *p_data, int num_fields, char **p_fields, char **p_col_names)
-{
-  sqlite3 **stat_db = (sqlite3 **)p_data;
-  if(num_fields != 6) // addr, year, month, day, hour, conso
+  if(!db || !stat_db)
   {
-    printf("update_stat_cb error: bad number of fields %d\n", num_fields);
+    fprintf(stderr, "Error: db_insert_hist dbs not opened!\n");
     return -1;
   }
 
-  int ret;
-  char *errmsg;
+  char sql[512];
+  int addr = 0;
+  int ghg = 43; // TODO: get it from energy_param table
+  int cost = 2466; // TODO: get it from energy_tariffv2
+  sprintf(sql, INSERT_HISTORY_TBL, addr, y, m, d, h, min, ah, wh, ghg, cost,
+                                   ah, ah, wh, wh);
+  do
+  {
+    retry = false;
+    ret = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
+    if(ret == SQLITE_BUSY)
+    {
+      sqlite3_free(errmsg);
+      retry = true;
+      usleep(20);
+    }
+    else if(ret != SQLITE_OK)
+    {
+      printf("db_insert_hist error: %s\n", errmsg);
+      sqlite3_free(errmsg);
+    }
+  }
+  while(retry);
+
+  if((last_insert = sqlite3_last_insert_rowid(db)) != prev_insert)
+  { // new statement inserted -> update the stat db
+    update_stat_db(y, m, d, h, min, wh/1000, ah/1000);
+  }
+
+  prev_insert = last_insert;
+
+  return ret;
+}
+
+int update_stat_db(int y, int m, int d, int h, int min, double kwh, double kah)
+{
+  if(!db || !stat_db)
+  {
+    fprintf(stderr, "Error: db_insert_hist dbs not opened!\n");
+    return -1;
+  }
+
+  int addr = 0;
   char sql[512];
 
- // too slow!
-  sprintf(sql, TOTO, p_fields[0], p_fields[1], p_fields[5], 
-                     p_fields[5], p_fields[0], p_fields[1]);
+  double day_conso = 0;
+  double night_conso = 0;
+  if(get_day_of_week(y, m, d) < 5 && is_full_tariff(h))
+    day_conso += kwh;
+  else
+    night_conso += kwh;
 
-  if((ret = sqlite3_exec(*stat_db, sql, NULL, NULL, &errmsg)) != SQLITE_OK)
+  // update energy_hour_stat 
+  sprintf(sql, UPDATE_STAT_HOUR, kwh, day_conso, night_conso, y, m, d, h, 
+                                 addr, y, m, d, h, kwh, day_conso, night_conso);
+  SQL_EXEC(stat_db, sql, "Update stat_hour DB");
+
+  // update energy_day_stat 
+  sprintf(sql, UPDATE_STAT_DAY, kwh, day_conso, night_conso, y, m, d,
+                                addr, y, m, d, kwh, day_conso, night_conso);
+  SQL_EXEC(stat_db, sql, "Update stat_day DB");
+  
+  // update energy_month_stat 
+  sprintf(sql, UPDATE_STAT_MONTH, kwh, day_conso, night_conso, y, m,
+                                  addr, y, m, kwh, day_conso, night_conso);
+  SQL_EXEC(stat_db, sql, "Update stat_month DB");
+
+  // update energy_year_stat 
+  sprintf(sql, UPDATE_STAT_YEAR, kwh, day_conso, night_conso, y,
+                                 addr, y, kwh, day_conso, night_conso);
+  SQL_EXEC(stat_db, sql, "Update stat_year DB");
+
+  return SQLITE_OK;
+}
+
+static int import_db_cb(void *context, int argc, char **argv, char **azColName)
+{
+  int y     = atoi(argv[0]);
+  int m     = atoi(argv[1]);
+  int d     = atoi(argv[2]);
+  int h     = atoi(argv[3]);
+  int min   = atoi(argv[4]);
+  float wh = atof(argv[5]);
+  float ah = atof(argv[6]);
+  static int counter = 0;
+  int num_elems = (int) context;
+
+  db_insert_hist(y, m, d, h, min, wh, ah);
+
+  printf("\r %.1f%%", 100*((double)counter++/num_elems));
+  fflush(stdout);
+
+  return SQLITE_OK;
+}
+
+static int import_db(sqlite3 **imp_db)
+{
+  int ret = SQLITE_OK;
+  char sql[512];
+
+  db_begin_transaction();
+
+  sqlite3_stmt *stmt;
+  sqlite3_prepare(*imp_db, COUNT_HISTORY_ELEM, sizeof(COUNT_HISTORY_ELEM), &stmt, NULL);
+  sqlite3_step(stmt);
+  int num_elems = atoi((char *)sqlite3_column_text(stmt, 0));
+
+  sprintf(sql, "select year, month, day, hour, min, ch1_kw_avg, ch1_amps_avg"
+               " from energy_history");
+
+  char *errmsg;
+  if((ret = sqlite3_exec(*imp_db, sql, import_db_cb, (void*)num_elems, &errmsg)) 
+     != SQLITE_OK)
   {
-    printf("update_stat_cb insert error: %s\n", errmsg);
+    printf("import_db select error: %s\n", errmsg);
     sqlite3_free(errmsg);
     return ret;
   }
+  printf("\n");
 
-  return 0;
-}
-*/
-static int update_stat_db(sqlite3 **db, sqlite3 **stat_db)
-{
-  int ret = SQLITE_OK;
+  // update status
+  sprintf(sql, "UPDATE energy_hour_stat SET status = 1 WHERE record_count = %d", 60);
+  SQL_EXEC(stat_db, sql, "Update energy_hour_stat status");
 
-  printf("Update stat db (can take a lot of time...)\n");
+  sprintf(sql, "UPDATE energy_day_stat SET status = 1 WHERE record_count = %d", 60*24);
+  SQL_EXEC(stat_db, sql, "Update energy_day_stat status");
 
-  sqlite3_stmt *stmt;
-  sqlite3_prepare(*db, COUNT_HISTORY_ELEM, sizeof(COUNT_HISTORY_ELEM), &stmt, NULL);
-  sqlite3_step(stmt);
-  int num_elems = atoi((char *)sqlite3_column_text(stmt, 0));
-  int processed = 0;
- 
-  char sql[512];
-  sqlite3_stmt *distinct_year;
-  sqlite3_stmt *distinct_month;
-  sqlite3_stmt *distinct_day;
-  sqlite3_stmt *distinct_hour;
-  sqlite3_stmt *min_conso;
-  ret = sqlite3_prepare(*db, SELECT_DISTINCT_YEAR, sizeof(SELECT_DISTINCT_YEAR), 
-                        &distinct_year, NULL);
-  if(ret != SQLITE_OK)
-  {
-    printf("update_stat_db sqlite3_prepare error: %s\n", sqlite3_errmsg(*db));
-    return ret;
-  }
-
-
-// TODO: take into account add field
-  while(sqlite3_step(distinct_year)==SQLITE_ROW)
-  {
-    int year = atoi((char *)sqlite3_column_text(distinct_year, 0));
-    double total_year = 0.0, total_year_w = 0.0, total_year_we = 0.0;
-    sprintf(sql, SELECT_DISTINCT_MONTH, year);
-    sqlite3_prepare(*db, sql, sizeof(sql), &distinct_month, NULL);
-
-    while(sqlite3_step(distinct_month)==SQLITE_ROW)
-    {
-      int month = atoi((char *)sqlite3_column_text(distinct_month, 0));
-      double total_month = 0.0, total_month_w = 0.0, total_month_we = 0.0;
-      sprintf(sql, SELECT_DISTINCT_DAY, year, month);
-      sqlite3_prepare(*db, sql, sizeof(sql), &distinct_day, NULL);
-      while(sqlite3_step(distinct_day)==SQLITE_ROW)
-      {
-        int day = atoi((char *)sqlite3_column_text(distinct_day, 0));
-        double total_day = 0.0, total_day_w = 0.0, total_day_we = 0.0;
-        sprintf(sql, SELECT_DISTINCT_HOUR, year, month, day);
-        sqlite3_prepare(*db, sql, sizeof(sql), &distinct_hour, NULL);
-        while(sqlite3_step(distinct_hour)==SQLITE_ROW)
-        {
-          int hour = atoi((char *)sqlite3_column_text(distinct_hour, 0));
-          double total_hour = 0.0, total_hour_w = 0.0, total_hour_we = 0.0;;
-          sprintf(sql, SELECT_MIN_CONSO, year, month, day, hour);
-          ret = sqlite3_prepare(*db, sql, sizeof(sql), &min_conso, NULL);
-          if(ret != SQLITE_OK){
-            printf("prepare error: %s\n", sqlite3_errmsg(*db));
-            continue;
-          }
-          while(sqlite3_step(min_conso)==SQLITE_ROW)
-          {
-            double conso = atof((char *)sqlite3_column_text(min_conso, 0));
-            total_hour += conso;
-            if(get_day_of_week(year, month, day) < 5 && is_full_tariff(hour))
-              total_hour_w += conso;
-            else
-              total_hour_we += conso;
-            processed++;
-          }
-          sprintf(sql, INSERT_STAT_HOUR, 0, year, month, day, hour, 
-                  total_hour, total_hour_w, total_hour_we, 0);
-          sqlite3_exec(*stat_db, sql, NULL, NULL, NULL);
-          total_day += total_hour;
-          total_day_w += total_hour_w;
-          total_day_we += total_hour_we;
-          printf("\r%.2f%%", 100.0*((float)processed/num_elems));
-          fflush(stdout);
-        }
-        // write total_day in stat
-//        printf("total day %d/%d/%d : %f\n", day, month, year, total_day);
-        sprintf(sql, INSERT_STAT_DAY, 0, year, month, day, total_day, 
-                total_day_w, total_day_we,0);
-        sqlite3_exec(*stat_db, sql, NULL, NULL, NULL);
-        total_month += total_day;
-        total_month_w += total_day_w;
-        total_month_we += total_day_we;
-      }
-      // write total_month
-      sprintf(sql, INSERT_STAT_MONTH, 0, year, month, total_month, 
-              total_month_w, total_month_we,0);
-      sqlite3_exec(*stat_db, sql, NULL, NULL, NULL);
-      total_year += total_month;
-      total_year_w += total_month_w;
-      total_year_we += total_month_we;
-    }
-    // write total_year
-    sprintf(sql, INSERT_STAT_YEAR, 0, year, total_year, total_year_w, total_year_we,0);
-    sqlite3_exec(*stat_db, sql, NULL, NULL, NULL);
-  }
-  
+  db_end_transaction();
   return ret;
 }
 
@@ -360,45 +340,37 @@ static void print_help(char *prog_name)
 
 int main(int argc, char *argv[])
 {
-  sqlite3 *import_db = NULL, *db = NULL, *stat_db = NULL;
+  sqlite3 *imp_db = NULL;
   if(argc < 2)
   {
     print_help(argv[0]);
     return -1;
   }
 
-  int ret = sqlite3_open_v2(argv[1], &import_db, SQLITE_OPEN_READONLY, NULL);
-  if(ret != SQLITE_OK || import_db == NULL) {
+  int ret = sqlite3_open_v2(argv[1], &imp_db, SQLITE_OPEN_READONLY, NULL);
+  if(ret != SQLITE_OK || imp_db == NULL) {
     printf("Could not open database %s: open returned %d\n", argv[1], ret);
     return -1;
   }
-  if(!validate_imported_db(import_db))
+  if(!validate_imported_db(imp_db))
   {
     printf("error: %s is not a valid OWL database\n", argv[1]);
     goto end;
   }
   dbg_print("%s db is valid\n", argv[1]);
 
-  sqlite3_close(import_db);
-  import_db = NULL;
 
   // open db and stat_db
-  if(sqlite3_open_v2(EAGLE_OWL_DB, &db, SQLITE_OPEN_READWRITE, NULL)!=SQLITE_OK)
-    create_main_db(&db);
+  db_open();
 
-  if(sqlite3_open_v2(EAGLE_OWL_STAT_DB, &stat_db, SQLITE_OPEN_READWRITE, NULL) 
-     !=SQLITE_OK)
-    create_stat_db(&stat_db);
+  import_db(&imp_db);
 
-  merge_main_db(&db, argv[1]);
-  update_stat_db(&db, &stat_db);
+  sqlite3_close(imp_db);
+  imp_db = NULL;
  
 end:
-  if(import_db)
-    sqlite3_close(import_db);
-  if(db)
-    sqlite3_close(db);
-  if(stat_db)
-    sqlite3_close(stat_db);
+  if(imp_db)
+    sqlite3_close(imp_db);
+  db_close();
   return 0;
 }
