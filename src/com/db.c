@@ -61,6 +61,14 @@ int db_open(void)
     ret = sqlite3_open_v2(EAGLE_OWL_DB, &db, SQLITE_OPEN_READWRITE, NULL);
     if(ret != SQLITE_OK)
       ret = create_main_db();
+
+    if(ret == SQLITE_OK)
+    {
+      sqlite3_create_function(db, "update_stat_db", 5, SQLITE_UTF8, NULL, 
+                              &update_stat, NULL, NULL);
+
+      SQL_EXEC(db, CREATE_UPDATE_STAT_TRIGGER, "Create update_stat trigger");
+    }
   }
   
   if(!stat_db && ret == SQLITE_OK)
@@ -92,6 +100,7 @@ int db_begin_transaction()
   SQL_EXEC(stat_db, "BEGIN TRANSACTION", "begin transaction");
   return 0;
 }
+
 int db_end_transaction()
 {
   SQL_EXEC(db, "END TRANSACTION", "begin transaction");
@@ -99,14 +108,11 @@ int db_end_transaction()
   return 0;
 }
 
-//int db_insert_hist(int y, int m, int d, int h, int min, double wh, double ah)
 int db_insert_hist(struct record_data *rec)
 {
   int ret = SQLITE_OK;
   char *errmsg;
   bool retry = false;
-  static sqlite3_int64 prev_insert = 0;
-  sqlite3_int64 last_insert = 0;
 
   db_open();
 
@@ -147,15 +153,21 @@ int db_insert_hist(struct record_data *rec)
   }
   while(retry);
 
-  last_insert = sqlite3_last_insert_rowid(db);
-  if(last_insert != prev_insert)
-  { // new statement inserted -> update the stat db
-    update_stat_db(y, m, d, h, wh/1000);
-  }
-
-  prev_insert = last_insert;
-
   return ret;
+}
+
+void update_stat(sqlite3_context *context, int argc, sqlite3_value **argv)
+{
+  if(argc != 5)
+    return;
+
+  int y = sqlite3_value_int(argv[0]);
+  int m = sqlite3_value_int(argv[1]);
+  int d = sqlite3_value_int(argv[2]);
+  int h = sqlite3_value_int(argv[3]);
+  double kwh = sqlite3_value_double(argv[4]);
+//  printf("update_stat callback called %d/%d/%d @%dh: %f kwh\n", y, m, d, h, kwh);
+  update_stat_db(y, m, d, h, kwh);
 }
 
 int update_stat_db(int y, int m, int d, int h, double kwh)
@@ -182,7 +194,7 @@ int update_stat_db(int y, int m, int d, int h, double kwh)
   sprintf(sql, INSERT_STAT_HOUR, addr, y, m, d, h, kwh, day_conso, night_conso, 1, 0);
   SQL_EXEC(stat_db, sql, "insert_stat_hour");
   last_insert = sqlite3_last_insert_rowid(stat_db);
-  if(last_insert == prev_insert)
+  if(prev_insert == 0 || last_insert == prev_insert)
   {// insert failed -> record already exists -> update it
     sprintf(sql, UPDATE_STAT_HOUR, kwh, day_conso, night_conso, addr, y, m, d, h);
     SQL_EXEC(stat_db, sql, "update_stat_hour");
@@ -193,7 +205,7 @@ int update_stat_db(int y, int m, int d, int h, double kwh)
   sprintf(sql, INSERT_STAT_DAY, addr, y, m, d, kwh, day_conso, night_conso, 1, 0);
   SQL_EXEC(stat_db, sql, "insert_stat_day");
   last_insert = sqlite3_last_insert_rowid(stat_db);
-  if(last_insert == prev_insert)
+  if(prev_insert == 0 || last_insert == prev_insert)
   {// insert failed -> record already exists -> update it
     sprintf(sql, UPDATE_STAT_DAY, kwh, day_conso, night_conso, addr, y, m, d);
     SQL_EXEC(stat_db, sql, "update_stat_day");
@@ -204,7 +216,7 @@ int update_stat_db(int y, int m, int d, int h, double kwh)
   sprintf(sql, INSERT_STAT_MONTH, addr, y, m, kwh, day_conso, night_conso, 0);
   SQL_EXEC(stat_db, sql, "insert_stat_month");
   last_insert = sqlite3_last_insert_rowid(stat_db);
-  if(last_insert == prev_insert)
+  if(prev_insert == 0 || last_insert == prev_insert)
   {// insert failed -> record already exists -> update it
     sprintf(sql, UPDATE_STAT_MONTH, kwh, day_conso, night_conso, addr, y, m);
     SQL_EXEC(stat_db, sql, "update_stat_month");
@@ -215,7 +227,7 @@ int update_stat_db(int y, int m, int d, int h, double kwh)
   sprintf(sql, INSERT_STAT_YEAR, addr, y, kwh, day_conso, night_conso, 0);
   SQL_EXEC(stat_db, sql, "insert_stat_year");
   last_insert = sqlite3_last_insert_rowid(stat_db);
-  if(last_insert == prev_insert)
+  if(prev_insert == 0 || last_insert == prev_insert)
   {// insert failed -> record already exists -> update it
     sprintf(sql, UPDATE_STAT_YEAR, kwh, day_conso, night_conso, addr, y);
     SQL_EXEC(stat_db, sql, "update_stat_year");

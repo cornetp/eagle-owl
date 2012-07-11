@@ -41,6 +41,14 @@
                             " b6_time INT, b6_cost INT, b6_type INT," \
                             " PRIMARY KEY(name));"
 
+#define CREATE_UPDATE_STAT_TRIGGER "CREATE TRIGGER IF NOT EXISTS updatestat_cb "\
+                                   "AFTER INSERT ON energy_history"             \
+                                   " BEGIN SELECT update_stat_db(NEW.year,"     \
+                                   "  NEW.month, NEW.day, NEW.hour,"            \
+                                   "  NEW.ch1_kw_avg/1000);"                    \
+                                   " END;"
+
+#define DELETE_UPDATE_STAT_TRIGGER "DROP TRIGGER IF EXISTS updatestat_cb;"
 
 // record_count: number of minutes records that have been used to compute the stat
 // e.g: for a full day_stat: record_count should be 24*60 (24 hours of 60 minutes)

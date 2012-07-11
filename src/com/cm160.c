@@ -170,6 +170,7 @@ static int process_frame(int dev_id, unsigned char *frame)
       else
       {
         db_insert_hist(&rec);
+        db_update_status();
         process_live_data(&rec); // the record is not live data, but we do that to
                                  // update the time in the .live file
                                  // (the cm160 send a DB frame when a new minute starts)
