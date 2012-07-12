@@ -3,6 +3,7 @@
 #include <string.h>
 #include <usb.h>
 #include <pthread.h>
+#include <fcntl.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -99,10 +100,10 @@ void insert_db_history(void *data)
          (clock() - cStartClock) / (double)CLOCKS_PER_SEC);
 }
 
+bool receive_history = true;
+int frame_id = 0;
 static int process_frame(int dev_id, unsigned char *frame)
 {
-  static bool receive_history = true;
-  static int id = 0;
   int i;
   unsigned char data[1];
   unsigned int checksum = 0;
@@ -153,19 +154,19 @@ static int process_frame(int dev_id, unsigned char *frame)
 
     if(frame[0]==FRAME_ID_DB)
     {
-      if(receive_history && id < HISTORY_SIZE)
+      if(receive_history && frame_id < HISTORY_SIZE)
       {
-        if(id == 0)
+        if(frame_id == 0)
           printf("downloading history...\n");
-        else if(id%10 == 0)
+        else if(frame_id%10 == 0)
         { // print progression status
           // rough estimation : we should received a month of history
           // -> 31x24x60 minute records
-          printf("\r %.1f%%", min(100, 100*((double)id/(31*24*60))));
+          printf("\r %.1f%%", min(100, 100*((double)frame_id/(31*24*60))));
           fflush(stdout);
         }
         // cache the history in a buffer, we will insert it in the db later.
-        memcpy(history[id++], frame, 11);
+        memcpy(history[frame_id++], frame, 11);
       }
       else
       {
@@ -186,7 +187,7 @@ static int process_frame(int dev_id, unsigned char *frame)
         receive_history = false;
         // Now, insert the history into the db
         pthread_t thread;
-        pthread_create(&thread, NULL, (void *)&insert_db_history, (void *)id);
+        pthread_create(&thread, NULL, (void *)&insert_db_history, (void *)frame_id);
       }
       
       process_live_data(&rec);
@@ -296,29 +297,41 @@ static void demonize()
 
 int main(int argc, char *argv[])
 {
-  int i;
+  int dev_cnt;
   if(argc>1 && (strcmp(argv[1], "-d")==0) )
     demonize();
 
   db_open();
 
-  int dev_cnt = 0;
-  while((dev_cnt = scan_usb()) == 0)
-    sleep(2);
-  printf("Found %d compatible device%s\n", dev_cnt, dev_cnt>1?"s":"");
-
-  for(i = 0; i < dev_cnt; i++)
+  while(1)
   {
-    // do stuff with the detected device...
-    if(!(g_devices[i].hdev = usb_open(g_devices[i].usb_dev)))
+    dev_cnt = 0;
+    receive_history = true;
+    frame_id = 0;
+    printf("Wait for cm160 device to be connected\n");
+    while((dev_cnt = scan_usb()) == 0)
+      sleep(2);
+    printf("Found %d compatible device%s\n", dev_cnt, dev_cnt>1?"s":"");
+
+    // Only 1 device supported
+      
+    // open the device /dev/ttyUSBx so that the driver
+    // will set the baudrate
+    // TODO get the device by parsing dmesg string: 
+    //      "cm160 converter now attached to ttyUSB0"
+    int fd = open("/dev/ttyUSB0", O_RDWR|O_NOCTTY|O_NDELAY);
+    if(fd>0)
+      close(fd);
+    
+    if(!(g_devices[0].hdev = usb_open(g_devices[0].usb_dev)))
     {
       fprintf(stderr, "failed to open device\n");
       break;
     }
-    handle_device(i);
+    handle_device(0); 
+    usb_close(g_devices[0].hdev);
+  }
 
-    usb_close(g_devices[i].hdev);
-  } 
   return 0;
 }
 
