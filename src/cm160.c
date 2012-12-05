@@ -20,6 +20,18 @@ static char WAIT_MSG[11] = {
 
 #define HISTORY_SIZE 65536 // 30 * 24 * 60 = 43200 theoric history size
 
+#define CP210X_IFC_ENABLE       0x00
+#define CP210X_GET_LINE_CTL     0x04
+#define CP210X_SET_MHS          0x07
+#define CP210X_GET_MDMSTS       0x08
+#define CP210X_GET_FLOW         0x14
+#define CP210X_GET_BAUDRATE     0x1D
+#define CP210X_SET_BAUDRATE     0x1E
+
+/* CP210X_IFC_ENABLE */
+#define UART_ENABLE             0x0001
+#define UART_DISABLE            0x0000
+
 struct cm160_device g_devices[MAX_DEVICES];
 static unsigned char history[HISTORY_SIZE][11];
 
@@ -261,7 +273,16 @@ static int handle_device(int dev_id)
       g_devices[dev_id].epout = ep;
   }
 
-  // read/write main loop
+  // Set baudrate
+  int baudrate = 250000;
+  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT, 
+                      CP210X_IFC_ENABLE, UART_ENABLE, 0, NULL, 0, 500);
+  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT, 
+                      CP210X_SET_BAUDRATE, 0, 0, (char *)&baudrate, sizeof(baudrate), 500);
+  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT, 
+                      CP210X_IFC_ENABLE, UART_DISABLE, 0, NULL, 0, 500);
+  
+// read/write main loop
   io_loop(dev_id);
  
   usb_release_interface(hdev, 0);
@@ -314,15 +335,6 @@ int main(int argc, char *argv[])
     printf("Found %d compatible device%s\n", dev_cnt, dev_cnt>1?"s":"");
 
     // Only 1 device supported
-      
-    // open the device /dev/ttyUSBx so that the driver
-    // will set the baudrate
-    // TODO get the device by parsing dmesg string: 
-    //      "cm160 converter now attached to ttyUSB0"
-    int fd = open("/dev/ttyUSB0", O_RDWR|O_NOCTTY|O_NDELAY);
-    if(fd>0)
-      close(fd);
-    
     if(!(g_devices[0].hdev = usb_open(g_devices[0].usb_dev)))
     {
       fprintf(stderr, "failed to open device\n");

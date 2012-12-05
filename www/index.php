@@ -14,15 +14,15 @@
 function month_to_string($nb)
 {
   $months = array(
-    01 => 'Janvier',
-    02 => 'Fevrier',
-    03 => 'Mars',
-    04 => 'Avril',
-    05 => 'Mai',
-    06 => 'Juin',
-    07 => 'Juillet',
-    08 => 'Aout',
-    09 => 'Septembre',
+    1 => 'Janvier',
+    2 => 'Fevrier',
+    3 => 'Mars',
+    4 => 'Avril',
+    5 => 'Mai',
+    6 => 'Juin',
+    7 => 'Juillet',
+    8 => 'Aout',
+    9 => 'Septembre',
     10 => 'Octobre',
     11 => 'Novembre',
     12 => 'Decembre',
@@ -364,7 +364,7 @@ function draw_we_chart(title, axis_x_name)
     g_globalObject = new JsDatePick({
       useMode:1,
       isStripped:true,
-      target:"div3_example",
+      target:"div_calendar",
       selectedDate:{ 
         day:<?php echo"$day" ?>,
         month:<?php echo"$month" ?>,
@@ -391,13 +391,12 @@ function draw_we_chart(title, axis_x_name)
       var url="index.php?year="+obj.year+"&month="+obj.month;
       window.open(url, "_self");
     });
-  
   };
 
 </script>
 
 <?php
-echo "<div id=\"div3_example\" 
+echo "<div id=\"div_calendar\" 
       style=\"margin:10px 0 30px 0; width:205px; height:230px;\"></div>";
 echo "<div id=\"graph\">";
 if(!$data)
