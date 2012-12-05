@@ -729,7 +729,7 @@ JsDatePick.prototype.get_data_info = function(callback, year, month, aMainBox)
 	        }
 	};
 
-	xhr.open("POST", "../listValidDays.php", false);
+	xhr.open("POST", "listValidDays.php", false);
 	xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 	xhr.send("year="+year+"&month="+month);
 }
