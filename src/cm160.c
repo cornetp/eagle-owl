@@ -301,10 +301,10 @@ int main(int argc, char *argv[])
   if(argc>1 && (strcmp(argv[1], "-d")==0) )
     demonize();
 
-  db_open();
 
   while(1)
   {
+    db_open();
     dev_cnt = 0;
     receive_history = true;
     frame_id = 0;
@@ -326,10 +326,12 @@ int main(int argc, char *argv[])
     if(!(g_devices[0].hdev = usb_open(g_devices[0].usb_dev)))
     {
       fprintf(stderr, "failed to open device\n");
+      db_close();
       break;
     }
     handle_device(0); 
     usb_close(g_devices[0].hdev);
+    db_close();
   }
 
   return 0;

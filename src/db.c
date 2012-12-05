@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <sqlite3.h> 
 #include "db.h"
-#include "../db/eagleowl_sql.h"
+#include "sql_cmd.h"
 
 #define EAGLE_OWL_DB 		"eagleowl.db"
 #define EAGLE_OWL_STAT_DB 	"eagleowl_stat.db"
@@ -80,7 +80,7 @@ int db_open(void)
   return ret;
 }
 
-void db_close()
+void db_close(void)
 {
   if(db)
   {

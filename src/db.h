@@ -19,6 +19,7 @@ struct record_data {
 };
 
 int db_open(void);
+void db_close(void);
 int db_begin_transaction(void);
 int db_end_transaction(void);
 int db_insert_hist(struct record_data *rec);
