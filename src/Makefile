@@ -10,7 +10,7 @@ CFLAGS	+= -Isqlite-autoconf-3071300
 LDFLAGS :=
 LIBS	:= -lusb -lpthread -ldl
 
-OBJ_CM160 := cm160.o usb_utils.o db.o sqlite-autoconf-3071300/sqlite3.o
+OBJ_CM160 := cm160.o usb_utils.o db.o demonize.o sqlite-autoconf-3071300/sqlite3.o
 OBJ_DBIMP := db_import.o db.o sqlite-autoconf-3071300/sqlite3.o
 
 all: $(CM160) $(DB_IMPORT)

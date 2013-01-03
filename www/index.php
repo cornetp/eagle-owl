@@ -69,7 +69,6 @@ function var_to_js($jsname,$a)
 function get_data($db, $year=0, $month=0, $day=0)
 {
   $i = 0;
-
   $unit = "year";
   if($year)
     $unit = "month";
@@ -128,15 +127,18 @@ function get_stat_data($db, $year=0, $month=0, $day=0)
 
   $req = "SELECT ";
   $req.= "$unit, ";
-  $req.= "kwh_total, kwh_week_total, kwh_weekend_total FROM ".$table." ";
+  $req2 = "kwh_total, kwh_week_total, kwh_weekend_total FROM ".$table." ";
   if($unit <> "year"){
-    $req.= "WHERE ";
-    if($year)  $req.= "year = \"$year\" ";
-    if($month) $req.= "AND month = \"$month\" ";
-    if($day)   $req.= "AND day = \"$day\" ";
+    $req2.= "WHERE ";
+    if($year)  $req2.= "year = \"$year\" ";
+    if($month) $req2.= "AND month = \"$month\" ";
+    if($day){  
+	  $req2.= "AND day = \"$day\" ";
+	  $req2.="UNION SELECT hour+24, ".$req2."+1 AND hour=0 ";
+	}
   }
-  $req.= "ORDER BY $unit";
-  $req.= ";";
+    
+  $req.= $req2."ORDER BY $unit;";
 
 //  echo "<br/>$req<br/><br/>";
   $db->busyTimeout (10000);
@@ -315,12 +317,14 @@ function draw_chart(type, title, axis_x_name)
     myChart.setLegendForBar(3, 'Nuit & week-end');
     myChart.setLegendShow(true);
     myChart.setLegendPosition('top middle');
+	myChart.setBarSpeed(100);
   }
 //myChart.setGrid(false);
   myChart.setSize(800, 400);
 //myChart.setBackgroundImage('chart_bg.jpg');
   myChart.setBackgroundColor('#222244');
   myChart.setTooltipPosition('nw');
+  myChart.setLineSpeed(100);
 
   var len=myData.length;
   for(var i=0; i<len; i++)
@@ -396,8 +400,9 @@ function draw_we_chart(title, axis_x_name)
 </script>
 
 <?php
-echo "<div id=\"div_calendar\" 
-      style=\"margin:10px 0 30px 0; width:205px; height:230px;\"></div>";
+//echo "<div id=\"div_calendar\" style=\"margin:10px 0 10px 0; width:205px; height:200px;\"></div>";
+echo "<table><tr><td><div id=\"div_calendar\" style=\"margin:10px 0 10px 0; width:205px; height:210px;\"></td><td>&nbsp;&nbsp;&nbsp;&nbsp;</td>";
+echo  "<td><form> <input type=\"button\" value=\"Live consumption\" onclick=\"window.open('live.php')\"> </form></td></tr></div></table>";
 echo "<div id=\"graph\">";
 if(!$data)
   echo "No data for \"$title\"";
