@@ -56,7 +56,7 @@ Do the following steps:
  * copy the content of the www directory into your web server DocumentRoot 
    directory (usually /var/www)
  * copy the etc/init/cm160.conf file into /etc/init, if you want to start the
-   server automatically with upstart, you need to adjust the install path.
+   server automatically with upstart.
  
 Usage
 *****
