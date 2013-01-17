@@ -1,0 +1,90 @@
+eagle-owl version 0.9
+=====================
+
+eagle-owl is meant to interface the Owl cm160 +USB energy monitor
+in a linux environment.
+
+It uses the libusb library and does not need a specific kernel device driver.
+
+This program basically retrieves data from the cm160 device 
+and store it in a database (eagleowl.db).
+This database has the same structure as the one use by the 
+windows application provided by Owl.
+
+It also computes a 'statistics' database (eagleowl_stat.db) 
+used to have a fast access to the total current consumption 
+of a day, a month or a year.
+
+eagle-owl is composed of two executables:
+ * cm160 : It is the main executable. It basically does the following things:
+           - connect to the attached CM160 device
+           - retrieve the history sent by the cm160 device when connected
+           - gets 'live' information from the cm160 device
+           - feeds the main database with this information
+           - computes consumption statistics for the year, month and day 
+             and feeds the stat database
+
+ * db_import: this can be used to import the database created by the windows
+              program into eagle-owl. It mainly does the following things:
+              - merge the imported database with the eagleowl.db database
+              - computes the statistics from the imported database 
+                and insert them in the stat database.
+
+The data is accessible via a web interface.
+So you need to have a web server installed on your machine 
+to display the graphs.
+
+Compilation
+***********
+
+libusb-dev need to be installed (sudo apt-get install libusb-dev)
+
+$ cd src
+$ make
+
+Installation
+************
+
+There is not yet any installation script.
+
+Do the following steps:
+
+ * put your executables (cm160 and db_import) in the directory of your choice.
+ * copy the etc/eagleowl.conf file into /etc 
+ * edit /etc/eagleowl.conf and set the "install_path" to the path 
+   where you put the executables
+ * copy the content of the www directory into your web server DocumentRoot 
+   directory (usually /var/www)
+ * copy the etc/init/cm160.conf file into /etc/init, if you want to start the
+   server automatically with upstart.
+ 
+Usage
+*****
+
+If you want to import the data you already collected with the Owl program on
+a windows machine, you can do it with the db_import executable.
+
+To do that, find the be.db file on your windows machine 
+(you can find it from Start>All Programs>The OWL USB Connect 2>Open Data Folder)
+and copy it on your linux machine where eagle-owl is installed.
+Then execute:
+
+./db_import be.db
+
+This will create eagleowl.db and eagleowl_stat.db
+
+To interface you cm160 device, simply launch cm160 executable and plug 
+your device to the computer. The program should automatically detect 
+the device and start acquisition of the data.
+
+To access your data, type the address of your computer in a browser.
+To access the live consuption, access the live.php from a browser
+(http://<your_ip>/live)
+
+When connected, the cm160 device starts to send the history stored in its memory
+(roughly 1 month of history), the it starts sending live data.
+So it can take a few time just after the connection before 
+the live data is actually updated.
+
+- Philippe Cornet <phil.cornet@gmail.com>
+

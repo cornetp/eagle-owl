@@ -1,3 +1,24 @@
+/*
+ * eagle-owl application.
+ *
+ * Copyright (C) 2012 Philippe Cornet <phil.cornet@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the Free
+ * Software Foundation; either version 2 of the License, or (at your option)
+ * any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+ * more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ *
+ */
+
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
@@ -11,6 +32,7 @@
 #include "cm160.h"
 #include "usb_utils.h"
 #include "db.h"
+#include "demonize.h"
 
 static char ID_MSG[11] = { 
       0xA9, 0x49, 0x44, 0x54, 0x43, 0x4D, 0x56, 0x30, 0x30, 0x31, 0x01 };
@@ -250,7 +272,7 @@ static int handle_device(int dev_id)
   usb_dev_handle *hdev = g_devices[dev_id].hdev;
 
   usb_detach_kernel_driver_np(hdev, 0);
-
+  
   if( 0 != (r = usb_set_configuration(hdev, dev->config[0].bConfigurationValue)) )
   {
     printf("usb_set_configuration returns %d (%s)\n", r, usb_strerror());
@@ -289,39 +311,12 @@ static int handle_device(int dev_id)
   return 0;
 }
 
-static void demonize()
-{
-  switch (fork())
-  {
-    case -1:
-      fprintf(stderr, "can't start daemon\n");
-      exit(EXIT_FAILURE);
-  
-    case  0: // child
-      // Change the file mode mask
-      umask(0);
-      // detach from tty
-      if (setsid() == -1)
-      {
-        fprintf(stderr, "can't detach from tty\n");
-        exit(EXIT_FAILURE);
-      }
-      // Close out the standard file descriptors
-      close(STDIN_FILENO);
-      close(STDOUT_FILENO);
-      close(STDERR_FILENO);
-      break;
-    default: // parent: exit
-      exit(EXIT_SUCCESS);
-  }
-}
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
   int dev_cnt;
   if(argc>1 && (strcmp(argv[1], "-d")==0) )
-    demonize();
-
+    demonize(argv[0]);
 
   while(1)
   {
