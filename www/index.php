@@ -210,7 +210,7 @@ if(isset($config['db_subdir']))
 if(isset($config['main_db_name']))
   $main_db = $config['main_db_name'];
 if(isset($config['stat_db_name']))
-  $main_db = $config['stat_db_name'];
+  $stat_db = $config['stat_db_name'];
 
 if($root_path === "" || !is_dir($root_path))
 {
