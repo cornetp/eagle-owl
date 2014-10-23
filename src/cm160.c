@@ -20,6 +20,8 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
 #include <usb.h>
@@ -54,7 +56,7 @@ static char WAIT_MSG[11] = {
 #define UART_ENABLE             0x0001
 #define UART_DISABLE            0x0000
 
-struct cm160_device g_devices[MAX_DEVICES];
+struct cm160_device g_devices[];
 static unsigned char history[HISTORY_SIZE][11];
 
 static void process_live_data(struct record_data *rec) 
@@ -70,8 +72,9 @@ static void process_live_data(struct record_data *rec)
   }
   else
     _watts = w;
-
-  FILE *fp =  fopen(".live", "w");
+  char filename[255];
+  sprintf(filename,".%d.live",rec->addr);
+  FILE *fp =  fopen(filename, "w");
   if(fp && rec->hour!=255) // to avoid writing strange values (i.e. date 2255, hour 255:255) that sometimes I got
   {
     fprintf(fp, "%02d/%02d/%04d %02d:%02d - %.02f kW\n", 
@@ -83,7 +86,7 @@ static void process_live_data(struct record_data *rec)
 static void decode_frame(unsigned char *frame, struct record_data *rec)
 {
   int volt = 230; // TODO: use the value from energy_param table (supply_voltage)
-  rec->addr = 0; // TODO: don't use an harcoded addr value for the device...
+  rec->addr = g_devices[0].serial_no;
   rec->year = frame[1]+2000;
   rec->month = frame[2];
   rec->day = frame[3];
@@ -314,31 +317,60 @@ static int handle_device(int dev_id)
 
 int main(int argc, char **argv)
 {
+  int opt = 0;
+  char serial[255]="";
+  char *serialPtr;
+  int index;
+  serialPtr = serial;
   int dev_cnt;
-  if(argc>1 && (strcmp(argv[1], "-d")==0) )
-    demonize(argv[0]);
 
-  while(1)
-  {
+  while ((opt = getopt(argc,argv, "ds:")) != -1) {
+    switch(opt) {
+      case 's':
+        strcpy(serialPtr,optarg);
+        break;
+      case 'd':
+        demonize(argv[0]);
+        break;
+      case '?':
+        if (optopt == 's') {
+          fprintf(stderr, "Option -%c requires an argument.\n", optopt);
+        } else if (isprint(optopt)) {
+          fprintf(stderr, "Unknown option '-%c'.\n", optopt); 
+        } else {  
+          printf("\nUnknown option character '\\x%x'.\n:", optopt);
+        } 
+        break;
+      default:
+        abort();
+    }
+  }
+  for (index = optind; index < argc; index++)
+    printf ("Non-option argument %s\n", argv[index]);
+
+  while(1) {
     db_open();
     dev_cnt = 0;
     receive_history = true;
     frame_id = 0;
     printf("Wait for cm160 device to be connected\n");
-    while((dev_cnt = scan_usb()) == 0)
+    while((dev_cnt = scan_usb(serialPtr)) == 0)
       sleep(2);
-    printf("Found %d compatible device%s\n", dev_cnt, dev_cnt>1?"s":"");
-
-    // Only 1 device supported
-    if(!(g_devices[0].hdev = usb_open(g_devices[0].usb_dev)))
-    {
-      fprintf(stderr, "failed to open device\n");
-      db_close();
+    if (dev_cnt>1) {
+      printf("Found %d compatible devices.\nUse -s <serial> option.\n", dev_cnt);
       break;
+    } else {
+      printf("Found 1 compatible device.\nStarting....\n");
+      if(!(g_devices[0].hdev = usb_open(g_devices[0].usb_dev))) {
+        fprintf(stderr, "failed to open device\n");
+        db_close();
+        break;
+      }
+
+      handle_device(0); 
+      usb_close(g_devices[0].hdev);
+      db_close();
     }
-    handle_device(0); 
-    usb_close(g_devices[0].hdev);
-    db_close();
   }
 
   return 0;

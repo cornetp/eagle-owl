@@ -56,8 +56,20 @@
 */
 // The language array - change these values to your language to better fit your needs!
 g_l = [];
-g_l["MONTHS"] = ["January","February","March","April","May","June","July","August","September","October","November","December"];
-g_l["DAYS_3"] = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+g_l["MONTHS"]= [];
+g_l["DAYS_3"]= [];
+var formatter = new Intl.DateTimeFormat("pl", { month: "long" });
+for(i=0;i<12;i++) {
+  g_l["MONTHS"].push(formatter.format(new Date(2000,i,1)));
+}
+//g_l["MONTHS"] = ["January","February","March","April","May","June","July","August","September","Paździer","November","December"];
+
+var formatter = new Intl.DateTimeFormat("pl", { weekday: "short" });
+
+for(i=1;i<8;i++) {
+  g_l["DAYS_3"].push(formatter.format(new Date(2000,9,i)));
+}
+//g_l["DAYS_3"] = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
 g_l["MONTH_FWD"] = "Move a month forward";
 g_l["MONTH_BCK"] = "Move a month backward";
 g_l["YEAR_FWD"] = "Move a year forward";

@@ -36,7 +36,7 @@ if ($year && $month)
   $stat_db = $root_path."/".$db_subdir."/".$stat_db;
   
   $db = new SQLite3($stat_db);
-  $req = "SELECT day, status FROM energy_day_stat WHERE year = $year and month = $month;";
+  $req = "SELECT day, status FROM energy_hour_stat WHERE year = $year and month = $month GROUP BY year,month, day ;";
   $db->busyTimeout (10000);
   $result = $db->query($req);
   while ($res = $result->fetchArray())

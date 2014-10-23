@@ -22,6 +22,6 @@
 #ifndef __USB_UTILS__
 #define __USB_UTILS__
 
-int scan_usb();
+int scan_usb(char *serial);
 
 #endif // __USB_UTILS__

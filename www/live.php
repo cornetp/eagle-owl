@@ -23,74 +23,82 @@
         var graph = $("#live_graph");
         var data = []; totalPoints = 300;
         var marks = [];
-        var min, max;
-        function getData() 
+        var min = [];
+        var max = [];
+        function getData(addr) 
         {
-          if(typeof getData.counter == 'undefined' )
-              getData.counter = 0;
-          if(typeof getData.prev_time == 'undefined' )
-            getData.prev_time = '00:00';
- 
+          if(typeof counter == 'undefined' )
+              counter = 0;
+          if(typeof prev_time == 'undefined' )
+            prev_time = '00:00';
+          if(typeof data[addr] == 'undefined' )
+            data[addr]=[];
           // init data with -1
-          if(data.length == 0)
+          if(data[addr].length == 0)
           {
             for(var i = 0; i < totalPoints; ++i)
-              data.push(-1);
+              data[addr].push(-1);
           }
           // remove the oldest value
-          if(data.length >= totalPoints)
-            data = data.slice(1);
+          if(data[addr].length >= totalPoints)
+            data[addr] = data[addr].slice(1);
        
           // add the new one
           function onNewData(new_data)
           {
-            getData.counter++;
+            counter++;
             // string format: 'dd/MM/yyyy hh:mm - xxxx kW'
             var time = new_data.split(' - ')[0];
             time = time.split(' ')[1];
             var kw = new_data.split(' - ')[1];
             kw = kw.split(' ')[0];
             var v = parseFloat(kw);
-            data.push(v);
-            if(time != getData.prev_time)
+            data[addr].push(v);
+            if(time > prev_time)
             {
               var mark = [];
               mark['pos'] = totalPoints;
               mark['text'] = time;
               marks.push(mark);
-              getData.prev_time = time;
+              prev_time = time;
             }
           }
 
           $.ajax({
-            url: "live_data.php",
+            url: "live_data_id.php?addr="+addr,
             method: 'GET',
             dataType: 'text',
             success: onNewData
           });
     
           // compute min and max
-          max = Math.max.apply(null, data);
-          min = max;
-          for (var i = totalPoints-1; i >= 0; i--) 
-          {
-            if (data[i] < min && data[i] > 0) {
-              min = data[i];
+          for (key in data) {
+            max[key] = Math.max.apply(null, data[key]);
+            min[key] = max[key];
+     
+            for (var i = totalPoints-1; i >= 0; i--) 
+            {
+              if (data[key][i] < min[key] && data[key][i] > 0) {
+                min[key] = data[key][i];
+              }
             }
           }
 
-         $('.min').remove();
-         if(min>0)
-         {
-           var off = 3;
-           graph.append('<div class="min" style="position:absolute; right:10px; top:' + off + 'px;color:#88F;font-size:smaller">min:' + min + '</div>');
-         }
-         
-         $('.max').remove();
-         if(max>0 && max != min)
-         {
-           var off = 15;
-           graph.append('<div class="max" style="position:absolute; right:10px; top:' + off + 'px;color:#F88;font-size:smaller">max:' + max + '</div>');
+         var index=0;
+         for (key in data) {
+           var off = 3+index*30;
+           if(min[key]>0) {
+             $('#min'+key).remove();
+
+             graph.append('<div id="min'+key+'" class="min" style="position:absolute; right:10px; top:' + off + 'px;color:#88F;font-size:smaller">min:' + min[key] + '</div>');
+           }
+           if(max[key]>0 && max[key] != min[key])
+           {
+             $('#max'+key).remove();
+             var off = 15+index*30;
+             graph.append('<div id="max'+key+'" class="max" style="position:absolute; right:10px; top:' + off + 'px;color:#F88;font-size:smaller">max:' + max[key] + '</div>');
+           }
+           index++;
          }
           // update marks
           var num_marks = marks.length;
@@ -102,8 +110,8 @@
  
           // zip the generated y values with the x values
           var res = [];
-          for(var i = 0; i < data.length; ++i)
-            res.push([i, data[i]])
+          for(var i = 0; i < data[addr].length; ++i)
+            res.push([i, data[addr][i]])
           return res;
         }
 
@@ -115,13 +123,15 @@
           {
             var mark = marks[i];
             if(marks[i].pos >= 0)
-              markings.push({ color: '#888', lineWidth: 0.5, xaxis: { from: marks[i].pos, to: marks[i].pos } });
-
-            if(min >= 0)
-              markings.push({ color: '#88F', lineWidth: 0.5, yaxis: { from: min, to: min } });
-            if(max >= 0 && max != min)
-              markings.push({ color: '#F88', lineWidth: 0.5, yaxis: { from: max, to: max } });
-          }
+               markings.push({ color: '#888', lineWidth: 0.5, xaxis: { from: marks[i].pos, to: marks[i].pos } });
+           } 
+           for(key in data) { 
+            if(min[key] >= 0)
+              markings.push({ color: '#88F', lineWidth: 0.5, yaxis: { from: min[key], to: min[key] } });
+            if(max[key] >= 0 && max != min[key])
+              markings.push({ color: '#F88', lineWidth: 0.5, yaxis: { from: max[key], to: max[key] } });
+           }
+          
           return markings;
         }
         // Add ticks with the time value
@@ -171,10 +181,11 @@
             yaxis: { min: 0 },
             grid: { markings: markings }
         };
-        var plot = $.plot(graph, [ getData() ], options);
+        var plot = $.plot(graph, [ getData(2360670),getData(2354602)], options);
       
         function update() {
-            plot.setData([ getData() ]);
+            plot.setData([ getData(2360670),getData(2354602)]);
+            //alert(getData(2360670)+getData(2354602));
             plot.setupGrid();
             plot.draw();
             
@@ -185,6 +196,7 @@
       }
 
       build_live_graph();
+
     </script>
 
   </body>

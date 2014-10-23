@@ -47,6 +47,6 @@ int db_insert_hist(struct record_data *rec);
 int db_update_status(void);
 
 void update_stat(sqlite3_context *context, int argc, sqlite3_value **argv);
-int update_stat_db(int y, int m, int d, int h, double kwh);
+int update_stat_db(int addr, int y, int m, int d, int h, double kwh);
 
 #endif // __DB_H__
