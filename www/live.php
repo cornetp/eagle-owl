@@ -12,7 +12,7 @@
 
     <h1>Electricity live consumption</h1>
 
-    <div id="live_graph" style="width:600px;height:400px;"></div>
+    <div id="live_graph" style="width:900px;height:400px;"></div>
     <p>Update every: <input id="updateInterval" type="text" value="" style="text-align: right; width:2em"> seconds 
         ( display <a id="duration"></a> minutes )
     </p>
@@ -83,14 +83,14 @@
          if(min>0)
          {
            var off = 3;
-           graph.append('<div class="min" style="position:absolute; right:10px; top:' + off + 'px;color:#88F;font-size:smaller">min:' + min + '</div>');
+           graph.append('<div class="min" style="position:absolute; right:40px; top:' + off + 'px;color:#88F;font-size:smaller">min:' + min + '</div>');
          }
          
          $('.max').remove();
          if(max>0 && max != min)
          {
            var off = 15;
-           graph.append('<div class="max" style="position:absolute; right:10px; top:' + off + 'px;color:#F88;font-size:smaller">max:' + max + '</div>');
+           graph.append('<div class="max" style="position:absolute; right:40px; top:' + off + 'px;color:#F88;font-size:smaller">max:' + max + '</div>');
          }
           // update marks
           var num_marks = marks.length;
@@ -144,7 +144,7 @@
         }
 
         // setup control widget
-        var updateInterval = 1; // in seconds
+        var updateInterval = 2; // in seconds
         var duration = (updateInterval*totalPoints)/60; // in minutes
         duration += '';
         document.getElementById("duration").innerHTML = duration;
@@ -168,7 +168,7 @@
         var options = {
             series: { shadowSize: 0 }, // drawing is faster without shadows
             xaxis: { ticks: xaxis_ticks },
-            yaxis: { min: 0 },
+            yaxis: { min: 0 , position: "right" },
             grid: { markings: markings }
         };
         var plot = $.plot(graph, [ getData() ], options);
