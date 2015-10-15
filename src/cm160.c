@@ -72,10 +72,11 @@ static void process_live_data(struct record_data *rec)
     _watts = w;
 
   FILE *fp =  fopen(".live", "w");
-  if(fp && rec->hour!=255) // to avoid writing strange values (i.e. date 2255, hour 255:255) that sometimes I got
+  if(fp)
   {
-    fprintf(fp, "%02d/%02d/%04d %02d:%02d - %.02f kW\n", 
-            rec->day, rec->month, rec->year, rec->hour, rec->min, w);
+    if(rec->hour!=255) // to avoid writing strange values (i.e. date 2255, hour 255:255) that sometimes I got
+      fprintf(fp, "%02d/%02d/%04d %02d:%02d - %.02f kW\n", 
+              rec->day, rec->month, rec->year, rec->hour, rec->min, w);
     fclose(fp);
   }
 }
