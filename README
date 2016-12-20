@@ -1,3 +1,7 @@
+Update
+******
+The website that displays the data is build using the PHPlot and Materialize framework optimized for phone
+
 eagle-owl version 0.9
 =====================
 
@@ -87,4 +91,5 @@ So it can take a few time just after the connection before
 the live data is actually updated.
 
 - Philippe Cornet <phil.cornet@gmail.com>
+
 
