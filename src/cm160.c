@@ -23,20 +23,22 @@
 #include <stdbool.h>
 #include <string.h>
 #include <usb.h>
+#include <libconfig.h>
 #include <pthread.h>
 #include <fcntl.h>
+#include <mosquitto.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include "cm160.h"
 #include "usb_utils.h"
-#include "db.h"
+//#include "db.h"
 #include "demonize.h"
 
-static char ID_MSG[11] = { 
+static char ID_MSG[11] = {
       0xA9, 0x49, 0x44, 0x54, 0x43, 0x4D, 0x56, 0x30, 0x30, 0x31, 0x01 };
-static char WAIT_MSG[11] = { 
+static char WAIT_MSG[11] = {
       0xA9, 0x49, 0x44, 0x54, 0x57, 0x41, 0x49, 0x54, 0x50, 0x43, 0x52 };
 
 
@@ -57,7 +59,12 @@ static char WAIT_MSG[11] = {
 struct cm160_device g_devices[MAX_DEVICES];
 static unsigned char history[HISTORY_SIZE][11];
 
-static void process_live_data(struct record_data *rec) 
+struct settings st;
+FILE *fout=NULL;
+struct mosquitto *mosq=NULL;
+config_t cfg, *cf;
+
+static void process_live_data(struct record_data *rec)
 {
   static double _watts = -1;
   double w = rec->watts;
@@ -71,14 +78,14 @@ static void process_live_data(struct record_data *rec)
   else
     _watts = w;
 
-  FILE *fp =  fopen(".live", "w");
+/*  FILE *fp =  fopen("bds/.live", "w");
   if(fp)
   {
     if(rec->hour!=255) // to avoid writing strange values (i.e. date 2255, hour 255:255) that sometimes I got
-      fprintf(fp, "%02d/%02d/%04d %02d:%02d - %.02f kW\n", 
+      fprintf(fp, "%02d/%02d/%04d %02d:%02d - %.02f kW\n",
               rec->day, rec->month, rec->year, rec->hour, rec->min, w);
     fclose(fp);
-  }
+  }*/
 }
 
 static void decode_frame(unsigned char *frame, struct record_data *rec)
@@ -98,42 +105,6 @@ static void decode_frame(unsigned char *frame, struct record_data *rec)
   rec->isLiveData = (frame[0] == FRAME_ID_LIVE)? true:false;
 }
 
-// Insert history into DB worker thread
-void insert_db_history(void *data)
-{
-  int i;
-  int num_elems = (int)data;
-  // For an unknown reason, the cm160 sometimes sends a value > 12 for month
-  // -> in that case we use the last valid month received.
-  static int last_valid_month = 0; 
-  printf("insert %d elems\n", num_elems);
-  printf("insert into db...\n");
-  clock_t cStartClock = clock();
-
-  db_begin_transaction();
-  for(i=0; i<num_elems; i++)
-  {
-    unsigned char *frame = history[i];
-    struct record_data rec;
-    decode_frame(frame, &rec);
-
-    if(rec.month < 0 || rec.month > 12)
-      rec.month = last_valid_month;
-    else
-      last_valid_month = rec.month;
-
-    db_insert_hist(&rec);
-    printf("\r %.1f%%", min(100, 100*((double)i/num_elems)));
-    fflush(stdout);
-  }
-  db_update_status();
-  db_end_transaction();
-
-  printf("\rinsert into db... 100%%\n");
-  fflush(stdout);
-  printf("update db in %4.2f seconds\n", 
-         (clock() - cStartClock) / (double)CLOCKS_PER_SEC);
-}
 
 bool receive_history = true;
 int frame_id = 0;
@@ -142,7 +113,7 @@ static int process_frame(int dev_id, unsigned char *frame)
   int i;
   unsigned char data[1];
   unsigned int checksum = 0;
-  static int last_valid_month = 0; 
+  static int last_valid_month = 0;
   usb_dev_handle *hdev = g_devices[dev_id].hdev;
   int epout = g_devices[dev_id].epout;
 
@@ -174,7 +145,7 @@ static int process_frame(int dev_id, unsigned char *frame)
     checksum &= 0xff;
     if(checksum != frame[10])
     {
-      printf("data error: invalid checksum: expected 0x%x, got 0x%x\n", 
+      printf("data error: invalid checksum: expected 0x%x, got 0x%x\n",
              frame[10], checksum);
       return -1;
     }
@@ -192,12 +163,15 @@ static int process_frame(int dev_id, unsigned char *frame)
       if(receive_history && frame_id < HISTORY_SIZE)
       {
         if(frame_id == 0)
-          printf("downloading history...\n");
+          printf("OWL-CM160 sends last month data the first time it's connected.\nSkipping history data before reading live values...\n");
         else if(frame_id%10 == 0)
         { // print progression status
           // rough estimation : we should received a month of history
           // -> 31x24x60 minute records
-          printf("\r %.1f%%", min(100, 100*((double)frame_id/(31*24*60))));
+//	printf("fid: %d calc: %d\n",frame_id,100*frame_id/(31*24*60));
+//	if (((100*frame_id/(31*24*60)) % 10)==0)
+//		printf(".");
+//          printf("\r %.1f%%", min(100, 100*((double)frame_id/(31*24*60))));
           fflush(stdout);
         }
         // cache the history in a buffer, we will insert it in the db later.
@@ -205,8 +179,8 @@ static int process_frame(int dev_id, unsigned char *frame)
       }
       else
       {
-        db_insert_hist(&rec);
-        db_update_status();
+//        db_insert_hist(&rec);
+//        db_update_status();
         process_live_data(&rec); // the record is not live data, but we do that to
                                  // update the time in the .live file
                                  // (the cm160 send a DB frame when a new minute starts)
@@ -215,19 +189,34 @@ static int process_frame(int dev_id, unsigned char *frame)
     else
     {
       if(receive_history)
-      { // When we receive the first live data, 
+      { // When we receive the first live data,
         // we know that the history is totally downloaded
-        printf("\rdownloading history... 100%%\n");
+        printf("History download complete. Receiving live values from now on\n");
         fflush(stdout);
         receive_history = false;
-        // Now, insert the history into the db
-        pthread_t thread;
-        pthread_create(&thread, NULL, (void *)&insert_db_history, (void *)frame_id);
       }
-      
+
       process_live_data(&rec);
       printf("LIVE: %02d/%02d/%04d %02d:%02d : %f W\n",
              rec.day, rec.month, rec.year, rec.hour, rec.min, rec.watts);
+	  // Write value to disk (if enabled)
+      if (st.output_file_path!=NULL) {
+          fprintf(fout,"%04d%02d%02d-%02d:%02d: %f W\n",rec.year,rec.month,rec.day,rec.hour,rec.min,rec.watts);
+          fflush(fout);
+      }
+	  // Send value to MQTT broker (if enabled)
+	  if (st.mqtt_host!=NULL) {
+		  char aux[100];
+		  sprintf(aux,"%f",rec.watts);
+		  if (mosquitto_connect(mosq,st.mqtt_host,st.mqtt_port,5)==MOSQ_ERR_SUCCESS) {
+			  mosquitto_publish(mosq,NULL,st.mqtt_topic,strlen(aux),aux,0,false);
+			  mosquitto_disconnect(mosq);
+		  }
+		  else {
+			  printf("Error connecting to MQTT broker\n");
+		  }
+	  }
+
     }
   }
   return 0;
@@ -273,7 +262,7 @@ static int handle_device(int dev_id)
   usb_dev_handle *hdev = g_devices[dev_id].hdev;
 
   usb_detach_kernel_driver_np(hdev, 0);
-  
+
   if( 0 != (r = usb_set_configuration(hdev, dev->config[0].bConfigurationValue)) )
   {
     printf("usb_set_configuration returns %d (%s)\n", r, usb_strerror());
@@ -298,34 +287,89 @@ static int handle_device(int dev_id)
 
   // Set baudrate
   int baudrate = 250000;
-  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT, 
+  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT,
                       CP210X_IFC_ENABLE, UART_ENABLE, 0, NULL, 0, 500);
-  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT, 
+  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT,
                       CP210X_SET_BAUDRATE, 0, 0, (char *)&baudrate, sizeof(baudrate), 500);
-  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT, 
+  r = usb_control_msg(hdev, USB_TYPE_VENDOR | USB_RECIP_INTERFACE | USB_ENDPOINT_OUT,
                       CP210X_IFC_ENABLE, UART_DISABLE, 0, NULL, 0, 500);
-  
+
 // read/write main loop
   io_loop(dev_id);
- 
+
   usb_release_interface(hdev, 0);
   return 0;
 }
 
 
+void read_configuration(void) {
+	const char *buf=NULL;
+
+	cf=&cfg;
+	config_init(cf);
+
+	// Set defaults for settings
+	st.install_path=NULL;
+	st.output_file_path=NULL;
+	st.mqtt_host=NULL;
+	st.mqtt_port=1883;
+	st.mqtt_topic="eagleowl/w";
+
+	// Look for a config file in /etc
+	if (config_read_file(cf,"/etc/eagleowl.conf")) {
+		// If it exists, use the values there
+		if (config_lookup_string(cf,"install_path",&buf))
+			st.install_path=(char *)buf;
+		if (config_lookup_string(cf,"output_file_path",&buf)) {
+			st.output_file_path=(char *)buf;
+			// Open file for further writes
+			if ((fout=fopen(st.output_file_path,"at"))==NULL) {
+				fprintf(stderr,"Can't open output file %s\n",st.output_file_path);
+				exit(EXIT_FAILURE);
+			}
+		}
+		if (config_lookup_string(cf,"mqtt_host",&buf))
+			st.mqtt_host=(char *)buf;
+		if (config_lookup_int(cf,"mqtt_port",&st.mqtt_port)==CONFIG_FALSE)
+			st.mqtt_port=1883;
+		if (config_lookup_string(cf,"mqtt_topic",&buf))
+			st.mqtt_topic=(char *)buf;
+	}
+	else {
+		fprintf(stderr,"Warning, no configuration file defined or bad syntax: %s\n",config_error_text(cf));
+	}
+
+	// Print configuration
+	printf("Settings:\n");
+	printf("  Install path: %s\n",st.install_path);
+	if (st.output_file_path!=NULL)
+		printf("  File output enabled, filename: %s\n",st.output_file_path);
+	if (st.mqtt_host!=NULL) 
+		printf("  MQTT support enabled, will publish to %s:%d, topic %s\n",st.mqtt_host,st.mqtt_port,st.mqtt_topic);
+
+}
+
 int main(int argc, char **argv)
 {
+	read_configuration();
+
+  // If MQTT support is enabled, initialize the library
+  if (st.mqtt_host!=NULL) {
+	  mosquitto_lib_init();
+	  mosq=mosquitto_new(NULL,true,NULL);
+  }
+
   int dev_cnt;
   if(argc>1 && (strcmp(argv[1], "-d")==0) )
     demonize(argv[0]);
 
   while(1)
   {
-    db_open();
+    //db_open();
     dev_cnt = 0;
     receive_history = true;
     frame_id = 0;
-    printf("Wait for cm160 device to be connected\n");
+    printf("Waiting for cm160 device to be connected\n");
     while((dev_cnt = scan_usb()) == 0)
       sleep(2);
     printf("Found %d compatible device%s\n", dev_cnt, dev_cnt>1?"s":"");
@@ -334,13 +378,22 @@ int main(int argc, char **argv)
     if(!(g_devices[0].hdev = usb_open(g_devices[0].usb_dev)))
     {
       fprintf(stderr, "failed to open device\n");
-      db_close();
+      //db_close();
       break;
     }
-    handle_device(0); 
+    handle_device(0);
     usb_close(g_devices[0].hdev);
-    db_close();
+    //db_close();
   }
+
+  if (fout!=NULL)
+      fclose(fout);
+
+  if (st.mqtt_host!=NULL) {
+	  mosquitto_destroy(mosq);
+	  mosquitto_lib_cleanup();
+  }
+  config_destroy(cf);
 
   return 0;
 }

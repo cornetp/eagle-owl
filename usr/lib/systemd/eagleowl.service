@@ -1,0 +1,18 @@
+[Unit]
+Description=CM160 daemon is part of eagle-owl, which is meant to interface the Owl cm160 +USB energy monitor; Frederic Bourqui <fbourqui@yahoo.com>
+Requires=local-fs.target
+After=local-fs.target
+
+[Service]
+Type=simple
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=60s
+StartLimitBurst=3
+EnvironmentFile=/etc/eagleowl.conf
+ExecStartPre=/bin/sh -c '/usr/bin/test -x $install_path/cm160 || { stop; exit 0; }'
+ExecStart=/bin/sh -c 'cd $install_path; exec $install_path/cm160'
+
+[Install]
+WantedBy=multi-user.target
+

@@ -20,6 +20,7 @@
  */
 
 #include <stdio.h>
+#include <stdbool.h>
 #include <usb.h>
 #include "cm160.h"
 
@@ -30,11 +31,11 @@ extern struct cm160_device g_devices[MAX_DEVICES];
 
 static int scan_device(struct usb_device *dev, int *dev_cnt)
 {
-  if(dev->descriptor.idVendor == OWL_VENDOR_ID && 
+  if(dev->descriptor.idVendor == OWL_VENDOR_ID &&
      dev->descriptor.idProduct == CM160_DEV_ID)
   {
     printf("Found compatible device #%d: %04x:%04x (%s)\n",
-           *dev_cnt, dev->descriptor.idVendor, 
+           *dev_cnt, dev->descriptor.idVendor,
            dev->descriptor.idProduct, dev->filename);
     g_devices[*dev_cnt].usb_dev = dev;
     (*dev_cnt)++;
